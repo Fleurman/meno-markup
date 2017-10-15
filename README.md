@@ -6,7 +6,7 @@ Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it i
 This script is the Meno parser written in `Javascript`.
 The project is still in early stage but some tags are already implemented.
 
-[You can discover and try it here](https://fleurman.neocities.org/menoeditor/)
+[You can discover and try it here](https://fleurman.neocities.org/menowriter/)
 
 ## syntax
 
