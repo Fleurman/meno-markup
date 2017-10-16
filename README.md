@@ -1,5 +1,5 @@
+![Meno-logo](/logo/128.png?raw=true)
 # Meno
----
 Meno is _another_ markup language to convert human readable text file into html content.
 Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it is handy !
 
