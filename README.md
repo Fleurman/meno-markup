@@ -11,23 +11,12 @@ The project is still in early stage but some tags are already implemented.
 ## syntax
 
 Block:
-
-<<<<<<< HEAD
-`: - :::::: ` = Headers 
-`< quote line` = Blockquote
-`; code line` = code
-`-_- comment line`
-`x[ mutliline
-styled text ]` all blocks can be multiline with brackets
-=======
 - `: - :::::: ` = Headers 
 - `< quote line` = Blockquote
 - `; code line` = code
 - `-_- comment line`
-
-All blocks can be multiline with brackets:
-- `x[ mutliline \nstyled text ]`
->>>>>>> 12fbedd61f830353d460d4a608694a6463056857
+- `x[ mutliline
+- styled text ]` all blocks can be multiline with brackets
 
 - `]alt]url` = image
 - `>text>url` = hypertext
@@ -44,9 +33,9 @@ Group of words can be styled with the use of brackets:
 - `x[styled inline text]`
 
 Lists:
-`-` = begin a dotted list
-`]` = begin a numbered list
-the number of tag is the indent
+- `-` = begin a dotted list
+- `]` = begin a numbered list
+- the number of tag is the indent
 
 Specials tags:
 - `---` = horizontal line
