@@ -3,7 +3,6 @@
 Meno is _another_ markup language to convert human readable text file into html content.
 Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it is handy !
 
-This script is the Meno parser written in `Javascript`.
 The project is still in early stage but some tags are already implemented.
 
 [You can discover and try it here](https://fleurman.neocities.org/menowriter/)
@@ -11,12 +10,12 @@ The project is still in early stage but some tags are already implemented.
 ## syntax
 
 Block:
-- `: - :::::: ` = Headers 
+- `: - :::::: ` = Headers
 - `< quote line` = Blockquote
 - `; code line` = code
 - `-_- comment line`
-- `x[ mutliline
-- styled text ]` all blocks can be multiline with brackets
+- `x[ mutliline styled text ]` all blocks can be multiline with brackets
+
 
 - `]alt]url` = image
 - `>text>url` = hypertext
