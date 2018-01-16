@@ -1,4 +1,4 @@
-var meno = {version:'0.9.1'};
+var meno = {version:'0.9.3'};
 
 meno.loadFile = function(callback,file) {
 	const req = new XMLHttpRequest();
@@ -41,6 +41,8 @@ meno.setWin = function(target,inner) {
 	target.innerHTML = inner;
 }
 
+meno.attr = {};
+
 meno.parseRaw = function(lines) {
 	var tree = {};
 	var input = "";
@@ -70,8 +72,8 @@ meno.parseRaw = function(lines) {
 				expr = {type: "line"};
 			} else if (match = /^(-{3,})([^ -]+)/.exec(input)){
 				expr = {type: "colorline", value: match[2]};
-			} else if (match = /^_(.*)=(.*)/.exec(input)){
-				expr = {type: "variable", name: match[1], value: match[2]};
+			} else if (match = /^_(.*):(.*)/.exec(input)){
+				expr = {type: "attr", name: match[1], value: match[2]};
 			} else if (match = /^<-(.*)<-/.exec(input)){
 				expr = {type: "marquee", value: match[1],direction:"left"};
 			} else if (match = /^->(.*)->/.exec(input)){
@@ -107,6 +109,8 @@ meno.parseRaw = function(lines) {
 			} else if (input == "-"){
 				expr = {type: "return"};
 			} else if (input == ":"){
+				expr = {type: "blank"};
+			} else if (input == "_: "){
 				expr = {type: "blank"};
 			} else if (match = /^(.+)/.exec(input)){
 				expr = {type: "text", value: match[1]};
@@ -160,12 +164,24 @@ meno.parseLink = function(raw) {
 	return parsed;
 }
 
+meno.attrList = ["title","id"]
+
+meno.addAttr = function(){
+	var k = Object.keys(meno.attr);
+	var t = "";
+	for(i in k){
+		var v = meno.attr[k[i]];
+		if(v!=""){ t+=k[i]+"=\"" + v + "\" ";}
+	}
+	return t;
+}
+
 meno.replace = {
 	code: function(match,tag,cont,rest){
 		return " <code style='display:inline-block;'>" + cont + "</code> " + rest;
 	},
 	quote: function(match,tag,cont,rest){
-		return " <em>" + cont + "</em> " + rest;
+		return " <q>" + cont + "</q> " + rest;
 	},
 	underline: function(match,tag,cont,rest){
 		return " <span style='text-decoration:underline;'>" + cont + "</span>" + rest;
@@ -178,7 +194,7 @@ meno.replace = {
 	},
 	link: function(match,tag,txt,url){
 		var link = txt == " " ? url : txt
-		return " <a href='" + url + "' target='_blank'>" + link + "</a> ";
+		return " <a href='" + url + "' target='_blank' " + meno.addAttr() + ">" + link + "</a> ";
 	},
 	image: function(match,alt,url){
 		return "<img alt='" + alt + "' src='" + url + "' />\n";
@@ -186,11 +202,12 @@ meno.replace = {
 	hint: function(match,tag,text,hint,rest){
 		return "<span class='tt'> "+meno.parseText(text)+"<span class='ttt'>"+hint+"</span></span>"+rest;
 	},
-	
+	title: function(match,tag,text,hint,rest){
+		return " ";
+	},
 }
 
 meno.produceHTML = function(tree) {
-	//console.log(tree[0].lenght);
 	var i = 0;
 	var t = {};
 	var ulist = 0;
@@ -223,14 +240,14 @@ meno.produceHTML = function(tree) {
 		switch(t.type){
 			case 'text':
 				var ptext = meno.parseText(t.value);
-				elems += "<p>" + ptext + "</p>\n";
+				elems += "<p " + meno.addAttr() + ">" + ptext + "</p>\n";
 				break;
 			case 'header':
-				elems += "<h" + t.priority + ">" + t.value + "</h" + t.priority + ">\n";
+				elems += "<h" + t.priority + " " + meno.addAttr() + ">" + t.value + "</h" + t.priority + ">\n";
 				break;
 			case 'quote':
 				var ptext = meno.parseText(t.value);
-				elems += "<blockquote>" + ptext + "</blockquote>\n";
+				elems += "<blockquote " + meno.addAttr() + ">" + ptext + "</blockquote>\n";
 				break;
 			case 'marquee':
 				var ptext = meno.parseText(t.value);
@@ -244,13 +261,13 @@ meno.produceHTML = function(tree) {
 				elems += "<!--" + t.value + "-->\n";
 				break;
 			case 'code':
-				elems += "<code>" + t.value + "</code>\n";
+				elems += "<code " + meno.addAttr() + ">" + t.value + "</code>\n";
 				break;
 			case 'image':
-				elems += "<img alt='" + t.alt + "' src='" + t.url + "' />\n";
+				elems += "<img " + meno.addAttr() + "alt='" + t.alt + "' src='" + t.url + "' />\n";
 				break;
 			case 'link':
-				elems += "<a href='" + t.url + "' target='_blank'>" + meno.parseLink(t.value) + "</a>\n";
+				elems += "<a " + meno.addAttr() + "href='" + t.url + "' target='_blank'>" + meno.parseLink(t.value) + "</a>\n";
 				break;
 			case 'container':
 				elems += "\n<" + t.tag;
@@ -269,6 +286,10 @@ meno.produceHTML = function(tree) {
 			case 'colorline':
 				elems += "\n<div style='height:2px;margin:1em 0;" +
 						 "background-color:" + t.value + "'></div>\n";
+				break;
+			case 'attr':
+				if(t.name==""){meno.attr={};}
+				else if(meno.attrList.indexOf(t.name)!=-1){meno.attr[t.name] = t.value;}
 				break;
 			default:
 				elems = elems;
