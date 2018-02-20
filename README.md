@@ -8,7 +8,7 @@ Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it i
 
 ## Syntax
 
-Block:
+#### Block:
 - `: - :::::: ` = Headers
 - `< quote line` = Blockquote
 - `; code line` = code
@@ -18,7 +18,7 @@ Block:
 - `]alt]url` = image
 - `>text>url` = hypertext
 
-Inline text:
+#### Inline text:
 - `text` = plain text
 - `<word` = inline italic word
 - `_word` = inline underlined word
@@ -26,15 +26,15 @@ Inline text:
 - `<<word` = inline bold word
 - `;word` = inline code word
 
-Group of words can be styled with the use of brackets:
+**Group of words can be styled with the use of brackets:**
 - `x[styled inline text]`
 
-Lists:
+#### Lists:
 - `-` = begin a dotted list
 - `]` = begin a numbered list
 - the number of tag is the indent
 
-Specials tags:
+#### Specials tags:
 - `---` = horizontal line
 - `---color` = horizontal colored line (color can be a name or a rgb())
 ---
