@@ -5,7 +5,7 @@ Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it i
 
 [You can discover and try it here](https://fleurman.neocities.org/menowriter/)
 
-## syntax
+## Syntax
 
 Block:
 - `: - :::::: ` = Headers
@@ -43,3 +43,25 @@ Specials tags:
 - `[ text : hint ]` display a hint box when mouse is over the text.
 
 - `<> text <>` create a `nav` element.
+
+- `_attr:val` = This sets the _attr_ of all the next elements to be _val_.
+- `_attr:` = This reset the _attr_ so the next elements won't have it.
+- `_:` = This reset all the _attr_.
+- Supported attributes are: `title, id, name, class`.
+
+
+## Methods
+
+- `meno.writeTo(element,file)` = Load _file_ with AJAX and put the parsed result in the `innerHTML` of _element_.
+- `meno.displayTo(element,raw)` = Put the parsed _raw_ in the `innerHTML` of _element_.
+
+- `meno.addCSS()` = Adds the **Meno.css** to the `<head>` of the page.
+
+### Internal Meno
+Use a `<script>` tag with `type=text/meno` to write internal meno articles:
+``` 
+<script type="text/meno">
+  //Put your meno here
+<script>
+```
+- `meno.convert()` = Converts all the `<script type="text/meno">` into articles.

@@ -114,12 +114,19 @@
 	color:black;
 }
 
-.meno .tt {
+.meno [meno-inblock]{
+	display:inline-block;
+}
+.meno [meno-underline]{
+	text-decoration:underline;
+}
+
+.meno [meno-tip] {
     position: relative;
 	display:inline;
 	border-bottom:1px dotted pink;
 }
-.meno .tt .ttt {
+.meno [meno-tip] [meno-tipbox] {
     font-size:13px;
     visibility: hidden;
     min-width:100px;
@@ -136,7 +143,7 @@
     opacity: 0;
     transition: opacity 0.3s;
 }
-.meno .tt .ttt:before {
+.meno [meno-tip] [meno-tipbox]:before {
     content: "";
     position: absolute;
     bottom:0;
@@ -145,10 +152,13 @@
     border-style: solid;
     border-color: transparent transparent pink pink;
 }
-.meno .tt:hover .ttt {
+.meno [meno-tip]:hover [meno-tipbox] {
     visibility: visible;
     opacity: 1;
 }
-.meno .tt:hover { background-color:rgba(250,200,200,0.1); }
+.meno [meno-tip]:hover { 
+	background-color:rgba(250,200,200,0.1);
+	cursor:help; 
+}
 
 .meno ::selection{background-color:orange;color:white;}
