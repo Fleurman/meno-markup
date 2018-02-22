@@ -114,6 +114,10 @@
 	color:black;
 }
 
+.meno [meno-hr]{
+	height:2px;
+	margin:1em 0;
+}
 .meno [meno-inblock]{
 	display:inline-block;
 }
@@ -122,40 +126,30 @@
 }
 
 .meno [meno-tip] {
-    position: relative;
+	position: relative;
 	display:inline;
 	border-bottom:1px dotted pink;
 }
-.meno [meno-tip] [meno-tipbox] {
-    font-size:13px;
-    visibility: hidden;
-    min-width:100px;
-    background-color: rgba(50,50,50,0.8);
-    color: white;
-    border-radius: 10px;
-    border-bottom-left-radius:0;
-    border-top-right-radius:0;
-    padding:3px 8px;
-    position: absolute;
-    z-index: 1;
-    bottom: 100%;
-    left: 50%;
-    opacity: 0;
-    transition: opacity 0.3s;
+.meno [meno-tip]::after {
+	content:attr(meno-tip);
+	font-size:13px;
+	min-width:100px;
+	min-heigh:100px;
+	background-color: rgba(50,50,50,0.8);
+	color: white;
+	border-bottom:2px solid orange;
+	border-radius: 10px;
+	border-bottom-left-radius:0;
+	border-top-right-radius:0;
+	padding:3px 8px;
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	opacity: 0;
+	visibility:hidden;
+	transition: opacity 0.3s;
 }
-.meno [meno-tip] [meno-tipbox]:before {
-    content: "";
-    position: absolute;
-    bottom:0;
-    left: 0;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent pink pink;
-}
-.meno [meno-tip]:hover [meno-tipbox] {
-    visibility: visible;
-    opacity: 1;
-}
+.meno [meno-tip]:hover::after {opacity:1;visibility:visible;}
 .meno [meno-tip]:hover { 
 	background-color:rgba(250,200,200,0.1);
 	cursor:help; 

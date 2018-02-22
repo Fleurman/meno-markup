@@ -223,28 +223,26 @@ var meno = (function () {
 		},
 
 		skipSpace: function (string) {
-			var first = string.search(/\S/);
-			if (first == -1)
-				return "";
-			return string.slice(first);
+			var trim = string.trim();
+			return trim;
 		},
 
 		parseText: function (raw) {
 			var parsed = raw;
 			//parsed = parsed.replace(/^(_)/gm,"");
-			parsed = parsed.replace(/(^<| <)([^< \[]+)( |$)/gm, meno.replace.quote);
-			parsed = parsed.replace(/(^<| <)\[(.+)\]( |$)/gm, meno.replace.quote);
-			parsed = parsed.replace(/(^<<| <<)([^ \[]+)( |$)/gm, meno.replace.bold);
-			parsed = parsed.replace(/(^<<| <<)\[(.+)\]( |$)/gm, meno.replace.bold);
-			parsed = parsed.replace(/(^>>| >>)([^ \[]+)( |$)/gm, meno.replace.small);
-			parsed = parsed.replace(/(^>>| >>)\[(.+)\]( |$)/gm, meno.replace.small);
-			parsed = parsed.replace(/(^_| _)([^ \[_]+)( |$)/gm, meno.replace.underline);
-			parsed = parsed.replace(/(^_| _)\[([^\]_]+)\]( |$)/gm, meno.replace.underline);
-			parsed = parsed.replace(/(^;| ;)\[(.+)\]( |$)/gm, meno.replace.code);
-			parsed = parsed.replace(/(^;| ;)([^ \[]+)( |$)/gm, meno.replace.code);
-			parsed = parsed.replace(/(^;| ;)(\[)( |$)/gm, meno.replace.code);
-			parsed = parsed.replace(/(^>| >)([^>]+)>([^ ]+)( |$)/g, meno.replace.link);
-			parsed = parsed.replace(/(^\[| \[)([^\]:]+):(.*)?\](.| |$)/g, meno.replace.hint);
+			parsed = parsed.replace(/(^<| <)([^< \[]+)( |)/gm, meno.replace.quote);
+			parsed = parsed.replace(/(^<| <)\[(.+)\]( |)/gm, meno.replace.quote);
+			parsed = parsed.replace(/(^<<| <<)([^ \[]+)( |)/gm, meno.replace.bold);
+			parsed = parsed.replace(/(^<<| <<)\[(.+)\]( |)/gm, meno.replace.bold);
+			parsed = parsed.replace(/(^>>| >>)([^ \[]+)( |)/gm, meno.replace.small);
+			parsed = parsed.replace(/(^>>| >>)\[(.+)\]( |)/gm, meno.replace.small);
+			parsed = parsed.replace(/(^_| _)([^ \[_]+)( |)/gm, meno.replace.underline);
+			parsed = parsed.replace(/(^_| _)\[([^\]_]+)\]( |)/gm, meno.replace.underline);
+			parsed = parsed.replace(/(^;| ;)\[(.+)\]( |)/gm, meno.replace.code);
+			parsed = parsed.replace(/(^;| ;)([^ \[]+)( |)/gm, meno.replace.code);
+			parsed = parsed.replace(/(^;| ;)(\[)( |)/gm, meno.replace.code);
+			parsed = parsed.replace(/(^>| >)([^>]+)>([^ ]+)( |)/g, meno.replace.link);
+			parsed = parsed.replace(/(^\[| \[)([^\]:]+):(.*)?\](.| |)/g, meno.replace.hint);
 			parsed = parsed.replace(/(\200)/g, "<br \>");
 			return parsed;
 		},
@@ -317,7 +315,8 @@ var meno = (function () {
 				return "<img alt='" + alt + "' src='" + url + "' />\n";
 			},
 			hint: function (match, tag, text, hint, rest) {
-				return " <span meno-tip>" + meno.parseText(text) + "<span meno-tipbox>" + hint + "</span></span>" + rest;
+				//return " <span meno-tip>" + meno.parseText(text) + "<span meno-tipbox>" + hint + "</span></span>" + rest;
+				return " <span meno-tip=\""+hint+"\">" + meno.parseText(text) + "</span>" + rest;
 				//return " <span class='tt' title='"+hint+"'>"+meno.parseText(text)+"</span>"+rest;
 			},
 			title: function (match, tag, text, hint, rest) {
@@ -409,8 +408,8 @@ var meno = (function () {
 					elems += "\n <hr /> \n";
 					break;
 				case 'colorline':
-					elems += "\n<div style='height:2px;margin:1em 0;" +
-					"background-color:" + t.value + "'></div>\n";
+					elems += "\n<div meno-hr " +
+					"style='background-color:" + t.value + "'></div>\n";
 					break;
 				case 'attr':
 					if (t.name == "") {

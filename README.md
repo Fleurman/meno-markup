@@ -7,17 +7,17 @@ Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it i
 
 ## Syntax
 
-Block:
+#### Block:
 - `: - :::::: ` = Headers
 - `< quote line` = Blockquote
 - `; code line` = code
 - `-_- comment line`
 - `x[ mutliline styled text ]` all blocks can be multiline with brackets
-
+---
 - `]alt]url` = image
 - `>text>url` = hypertext
 
-Inline text:
+#### Inline text:
 - `text` = plain text
 - `<word` = inline italic word
 - `_word` = inline underlined word
@@ -25,25 +25,25 @@ Inline text:
 - `<<word` = inline bold word
 - `;word` = inline code word
 
-Group of words can be styled with the use of brackets:
+**Group of words can be styled with the use of brackets:**
 - `x[styled inline text]`
 
-Lists:
+#### Lists:
 - `-` = begin a dotted list
 - `]` = begin a numbered list
 - the number of tag is the indent
 
-Specials tags:
+#### Specials tags:
 - `---` = horizontal line
 - `---color` = horizontal colored line (color can be a name or a rgb())
-
+---
 - `_tag_(classname)` = this opens a html container with an optional classname.
 - `___` = close the opened container.
-
+---
 - `[ text : hint ]` display a hint box when mouse is over the text.
-
+---
 - `<> text <>` create a `nav` element.
-
+---
 - `_attr:val` = This sets the _attr_ of all the next elements to be _val_.
 - `_attr:` = This reset the _attr_ so the next elements won't have it.
 - `_:` = This reset all the _attr_.
@@ -54,7 +54,7 @@ Specials tags:
 
 - `meno.writeTo(element,file)` = Load _file_ with AJAX and put the parsed result in the `innerHTML` of _element_.
 - `meno.displayTo(element,raw)` = Put the parsed _raw_ in the `innerHTML` of _element_.
-
+---
 - `meno.addCSS()` = Adds the **Meno.css** to the `<head>` of the page.
 
 ### Internal Meno
