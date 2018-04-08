@@ -40,75 +40,78 @@
 .meno ul {
 	display:inline-block;
 	padding:5px;
-	margin-left:20px;
 	border-top:2px solid lightgrey;
 	border-bottom:2px solid lightgrey;
 }
-.meno ul ul {
+.meno ul ul, .meno ul ol {
 	border:none;
 	padding:2px;
+	margin-left:20px;
 }
-.meno ul li {
-	font-size:1.25em;
+.meno ul>li {
+	font-size:1.2em;
 	font-weight:bold;
 	list-style-type: none;
 }
-.meno ul li:before {
+.meno ul>li:before {
 	content:"| ";
 }
-.meno ul ul li {
-	font-size:1.15em;
+.meno ul ul>li {
+	font-size:1.1em;
 	font-weight:bold;
 	color:dimgrey;
 }
-.meno ul ul li:before {
+.meno ul ul>li:before {
 	content:": ";
 	color:black;
 }
-.meno ul ul ul li {
-	font-size:1.1em;
+.meno ul ul ul>li {
+	font-size:1.05em;
 	font-weight:normal;
 	color:grey;
 }
-.meno ul ul ul li:before {
+.meno ul ul ul>li:before {
 	content:"· ";
 	color:black;
 }
-.meno ul ul ul ul li {
+.meno ul ul ul ul>li {
 	font-size:1em;
 	font-weight:normal;
 	color:black;
 }
-.meno ul ul ul ul li:before {
+.meno ul ul ul ul>li:before {
 	content:"- ";
 	color:black;
 }
 .meno ol {
 	display:inline-block;
 	padding:5px;
-	margin-left:20px;
+	list-style-position: inside;
 	border-top:2px solid lightgrey;
 	border-bottom:2px solid lightgrey;
 }
-.meno ol ol {
+.meno ol ol, .meno ol ul {
 	border:none;
 	padding:2px;
+	margin-left:20px;
 }
-.meno ol li {
-	font-size:1.25em;
+.meno ol>li {
+	font-size:1.2em;
 	font-weight:bold;
+	border-bottom:1px dashed lightgrey;
 }
-.meno ol ol li {
-	font-size:1.15em;
+.meno ol ol>li {
+	font-size:1.1em;
 	font-weight:bold;
 	color:dimgrey;
+	border-bottom:none;
 }
-.meno ol ol ol li {
-	font-size:1.1em;
+.meno ol ol ol>li {
+	font-size:1.05em;
 	font-weight:normal;
 	color:grey;
 }
-.meno ol ol ol ol li {
+.meno ol ol ol ol>li {
 	font-size:1em;
 	font-weight:normal;
 	color:black;
@@ -150,9 +153,12 @@
 	transition: opacity 0.3s;
 }
 .meno [meno-tip]:hover::after {opacity:1;visibility:visible;}
-.meno [meno-tip]:hover { 
-	background-color:rgba(250,200,200,0.1);
-	cursor:help; 
+.meno [meno-tip]:hover {
+	border:1px solid orange;
+	margin:-1px;
+	background-color:rgba(250,250,100,0.1);
+	cursor:help;
 }
 
 .meno ::selection{background-color:orange;color:white;}
+

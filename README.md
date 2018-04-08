@@ -1,30 +1,32 @@
-
 ![Meno-logo](/logo/128.png?raw=true)
 # Meno
 Meno is _another_ markup language to convert human readable text file into html content.
-Meno is **minimal**, it only uses these 8 characters `] : - < [ ; > _ ` yet it is handy !
+Meno is **minimal**, it only uses these 9 characters `]:-<[;>^_` yet it is handy !
 
 [You can discover and try it here](https://fleurman.neocities.org/menowriter/)
 
 ## Syntax
 
-#### Block:
+#### Bloc:
 - `: - :::::: ` = Headers
 - `< quote line` = Blockquote
 - `; code line` = code
 - `-_- comment line`
 - `x[ mutliline styled text ]` all blocks can be multiline with brackets
 ---
-- `]alt]url` = image
+- `[alt[url` = image
 - `>text>url` = hypertext
 
 #### Inline text:
 - `text` = plain text
-- `<word` = inline italic word
+- `<word` = inline quote word
+- `^word` = inline italic word
 - `_word` = inline underlined word
 - `>>word` = inline small word
 - `<<word` = inline bold word
 - `;word` = inline code word
+- `^^word` = inline supertext word
+- `__word` = inline subtext word
 
 **Group of words can be styled with the use of brackets:**
 - `x[styled inline text]`
