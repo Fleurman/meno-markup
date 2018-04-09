@@ -1,5 +1,5 @@
 var meno = (function () {
-	var m = { version: "0.9.1" };
+	var m = { version: "0.9.8" };
 	m.checkUpdates = function(){
 		loadFile(function (js) {
 			try {
@@ -90,7 +90,7 @@ var meno = (function () {
 					if (match[2]) { data.isBlock = true; }
 				} else if (match = /^(-{3,})$/.exec(input)) {
 					expr = {
-						type: "line"
+						type: "hr"
 					};
 				} else if (match = /^(-{3,})([^ -]+)/.exec(input)) {
 					expr = {
@@ -117,7 +117,7 @@ var meno = (function () {
 					};
 				} else if (match = /^<>(.*)<>/.exec(input)) {
 					expr = {
-						type: "navigation",
+						type: "nav",
 						value: match[1]
 					};
 				} else if (match = /^_([^_]+)_(.*)/.exec(input)) {
@@ -198,7 +198,7 @@ var meno = (function () {
 					};
 				} else if (match = /^<(\[)? (.+)/.exec(input)) {
 					expr = {
-						type: "quote",
+						type: "blockquote",
 						value: match[2]
 					};
 					if (match[1]) { data.isBlock = true; }
@@ -216,7 +216,7 @@ var meno = (function () {
 					if (match[1]) { data.isBlock = true; }
 				} else if (input == "-") {
 					expr = {
-						type: "return"
+						type: "br"
 					};
 				} else if (input == ":") {
 					expr = {
@@ -246,43 +246,41 @@ var meno = (function () {
 		return tree;
 	};
 
-	parseText= function (raw) {
-		var parsed = raw;
+	parseText= function (parsed) {
 		
 		parsed = parsed.replace(/</g,"&lt;");
+								//(^>| >)([^>]+)(&lt;|>)([^ ]+)( |$)
+		parsed = parsed.replace(/(?: |^)>([^>]+)(&lt;|>)([^ ]+)(?: |$)/gm, Rep.link);
 		
-		parsed = parsed.replace(/(^>| >)([^>]+)(&lt;|>)([^ ]+)( |$)/gm, replacer.link);
+		parsed = parsed.replace(/(?: |^)\[([^\]:]+?):(.+?)\](?: |$|)/gm, Rep.hint);
 		
-		parsed = parsed.replace(/(^\[| \[)([^\]:]+?):(.+?)\](.| |$)/gm, replacer.hint);
+		parsed = parsed.replace(Reg.w("__"), Rep.word.bind(Rep,"sub"));
+		parsed = parsed.replace(Reg.b("__"), Rep.bloc.bind(Rep,"sub"));
 		
-		parsed = parsed.replace(/(^__| __)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"sub"));
-		parsed = parsed.replace(/(^__| __)\[(.+?)\]( |$)/gm, replacer.sub);
+		parsed = parsed.replace(Reg.w("\\^\\^"), Rep.word.bind(Rep,"sup"));
+		parsed = parsed.replace(Reg.b("\\^\\^"), Rep.bloc.bind(Rep,"sup"));
 		
-		parsed = parsed.replace(/(^\^\^| \^\^)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"sup"));
-		parsed = parsed.replace(/(^\^\^| \^\^)\[(.+?)\]( |$)/gm, replacer.sup);
+		parsed = parsed.replace(Reg.w("\\^"), Rep.word.bind(Rep,"i"));
+		parsed = parsed.replace(Reg.b("\\^"), Rep.bloc.bind(Rep,"i"));
 		
-		parsed = parsed.replace(/(^&lt;&lt;| &lt;&lt;)([^ \n\.\[]+?)( |$)/gm, replacer.word.bind(null,"bold"));
-		parsed = parsed.replace(/(^&lt;&lt;| &lt;&lt;)\[(.+?)\]( |$)/gm, replacer.bold);
+		parsed = parsed.replace(Reg.w("&lt;&lt;"), Rep.word.bind(Rep,"b"));
+		parsed = parsed.replace(Reg.b("&lt;&lt;"), Rep.bloc.bind(Rep,"b"));
 		
-		parsed = parsed.replace(/(^&lt;| &lt;)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"quote"));
-		parsed = parsed.replace(/(^&lt;| &lt;)\[(.+?)\]( |$)/gm, replacer.quote);
+		parsed = parsed.replace(Reg.w("&lt;"), Rep.word.bind(Rep,"q"));
+		parsed = parsed.replace(Reg.b("&lt;"), Rep.bloc.bind(Rep,"q"));
 		
-		parsed = parsed.replace(/(^>>| >>)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"small"));
-		parsed = parsed.replace(/(^>>| >>)\[(.+?)\]( |$)/gm, replacer.small);
+		parsed = parsed.replace(Reg.w(">>"), Rep.word.bind(Rep,"small"));
+		parsed = parsed.replace(Reg.b(">>"), Rep.bloc.bind(Rep,"small"));
 		
-		parsed = parsed.replace(/(^\^| \^)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"italic"));
-		parsed = parsed.replace(/(^\^| \^)\[(.+?)\]( |$)/gm, replacer.italic);
+		parsed = parsed.replace(Reg.w("_"), Rep.word.bind(Rep,"u"));
+		parsed = parsed.replace(Reg.b("_"), Rep.bloc.bind(Rep,"u"));
 		
-		parsed = parsed.replace(/(^_| _)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"underline"));
-		parsed = parsed.replace(/(^_| _)\[(.+?)\]( |$)/gm, replacer.underline);
+		parsed = parsed.replace(Reg.w(";"), Rep.wcode);
+		parsed = parsed.replace(Reg.b(";"), Rep.code);
 		
-		parsed = parsed.replace(/(^;| ;)([^ \n\.\[]+)( |$)/gm, replacer.word.bind(null,"code"));
-		parsed = parsed.replace(/(^;| ;)\[(.+?)\]( |$)/gm, replacer.code);
+		parsed = parsed.replace(/(?: |^)\[([^\[]+)\[([^ ]+)(?: |$)/gm, Rep.imageinline);
 		
-		parsed = parsed.replace(/(^\[| \[)([^\[]+)\[([^ ]+)( |$)/gm, replacer.imageinline);
-		
-		//parsed = parsed.replace(/(^><| ><)([^ \n\.\[]+)( |$)/gm, replacer.raw);
-		parsed = parsed.replace(/(^>&lt;| >&lt;)\[(.+?)\]( |$)/gm, replacer.raw);
+		parsed = parsed.replace(Reg.b(">\&lt;"), Rep.raw);
 		
 		parsed = parsed.replace(/(\200)/g, "<br>");
 		
@@ -291,58 +289,52 @@ var meno = (function () {
 
 	parseLink= function (raw) {
 		var parsed = raw;
-		parsed = parsed.replace(/(^\[| \[)([^\[]+)\[([^ ]+)( |$)/gm, replacer.image);
-		//parsed = parsed.replace(/\]([^\]]+)\](([^ ]+){1})/g, replacer.image);
+		parsed = parsed.replace(/(?: |^)\[([^\[]+)\[([^ ]+)(?: |$)/gm, Rep.image);
 		return parsed;
 	};
+	
+	Reg = {
+		w: function(tag){return new RegExp("(?: |^)"+tag+"([^ \\n\\.\\[]+)(?: |$)","g");},
+		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","g");},
+	};
 
-	replacer= {
-		getHTML: function(tag,cont){ return "<"+tag+">"+cont+"</"+tag+">" },
+	Rep= {
+		getHTML: function(tag,cont){ return " <"+tag+">"+cont+"</"+tag+"> " },
 		
-		raw: function (match, tag, cont, rest) { return cont + rest; },
-		
-		quote: function (match, tag, cont, rest) { return " "+replacer.getHTML("q",cont) + rest; },
-		
-		sub: function (match, tag, cont, rest) { return replacer.getHTML("sub",cont) + rest; },
-		
-		sup: function (match, tag, cont, rest) { return replacer.getHTML("sup",cont) + rest; },
-		
-		bold: function (match, tag, cont, rest) { return " "+replacer.getHTML("strong",cont) + rest; },
-		
-		italic: function (match, tag, cont, rest) { return " "+replacer.getHTML("i",cont) + rest; },
-		
-		small: function (match, tag, cont, rest) { return " "+replacer.getHTML("small",cont) + rest; },
-		
-		code: function (match, tag, cont, rest) {
-			return " <code meno-inblock >" + escape(cont) + "</code> " + rest;
+		getImg: function(alt,url,line){
+			return ' <img alt="'+alt+'" src="'+url+'" '+(line ? 'style="display:inline;"' : "")+' title="'+alt+'" > ';
 		},
 		
-		underline: function (match, tag, cont, rest) {
-			return " <span meno-underline>" + cont + "</span>" + rest;
+		raw: function (m, cont) { return cont; },
+		
+		// quote: function (match, tag, cont, rest) { return " "+Rep.getHTML("q",cont) + rest; }, // bold: function (match, tag, cont, rest) { return " "+Rep.getHTML("strong",cont) + rest; }, // italic: function (match, tag, cont, rest) { return " "+Rep.getHTML("i",cont) + rest; }, // small: function (match, tag, cont, rest) { return " "+Rep.getHTML("small",cont) + rest; }, // sub: function (match, tag, cont, rest) { return Rep.getHTML("sub",cont) + rest; }, // sup: function (match, tag, cont, rest) { return Rep.getHTML("sup",cont) + rest; },
+		
+		code: function (m, cont) { return " <code meno-inblock >" + escape(cont) + "</code> "; },
+		wcode: function (m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
+		
+		underline: function (m, cont) { return " <span meno-underline>" + cont + "</span>" + rest; },
+		
+		link: function (match, txt, mod, url) {
+			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + addInlines() + ">" + (txt==" "?url:parseLink(txt)) + "</a> ";
 		},
 		
-		link: function (match, tag, txt, mod, url) {
-			var link = txt == " " ? url : txt;
-			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + addInlines() + ">" + parseLink(link) + "</a> ";
+		image: function (match, alt, url) { return Rep.getImg(alt,url); },
+		imageinline: function (match, alt, url) { return Rep.getImg(alt,url,true); },
+		
+		hint: function (match, text, hint) {
+			return " <span meno-tip=\""+hint+"\">" + parseText(text) + "</span>";
 		},
-		image: function (match, tag, alt, url) {
-			return "<img alt='" + alt + "' src='" + url + "' title='"+alt+"' />\n";
-		},
-		imageinline: function (match,tag, alt, url) {
-			return " <img alt='" + alt + "' src='" + url + "' style='display:inline;' title='"+alt+"' />\n";
-		},
-		hint: function (match, tag, text, hint, rest) {
-			return " <span meno-tip=\""+hint+"\">" + parseText(text) + "</span>" + rest;
-		},
-		title: function (match, tag, text, hint, rest) {
-			return " ";
-		},
+		
 		lt: function (match, cont) { return "&lt;" + cont; },
 		
 		wordspace: function(str){return str.replace(/(_)/gm," ");},
 		
-		word: function(tag, m, t, cont, rest, bb){
-			return replacer[tag](m,t, replacer.wordspace(cont), rest);
+		word: function(tag, m, cont){
+			return Rep.getHTML(tag,Rep.wordspace(cont));
+		},
+		
+		bloc: function(tag, m, cont){
+			return Rep.getHTML(tag,cont);
 		}
 	};
 	
@@ -383,9 +375,13 @@ var meno = (function () {
 		return t;
 	};
 	
-	getTab = function(n){
-		var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t;
+	getTab = function(n){ var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t; }
+	
+	simpleHTML = function(tag,val,noin){ 
+		return "<"+tag+(!noin?addInlines():"")+">"+parseText(val)+"</"+tag+">\n"; 
 	}
+	
+	//autoHTML = function(tag,noin){ return "\n<"+tag+(!noin?addInlines():"")+">\n"; }
 
 	produceHTML= function (tree) {
 		var i = 0;
@@ -420,38 +416,20 @@ var meno = (function () {
 				elems += t.value+"\n";
 				break;
 			case 'text':
-				var ptext = parseText(t.value);
-				elems += "<p " + addInlines() + ">" + ptext + "</p>\n";
+				elems += simpleHTML("p",t.value)
 				break;
 			case 'header':
-				var ptext = parseText(t.value);
-				elems += "<h" + t.priority + " " + addInlines() + ">" + ptext + "</h" + t.priority + ">\n";
+				elems += simpleHTML("h"+t.priority,t.value)
 				break;
-			case 'quote':
-				var ptext = parseText(t.value);
-				elems += "<blockquote " + addInlines() + ">" + ptext + "</blockquote>\n";
-				break;
-			case 'sub':
-				var ptext = parseText(t.value);
-				elems += "<sub " + addInlines() + ">" + ptext + "</sub>\n";
-				break;
-			case 'sup':
-				var ptext = parseText(t.value);
-				elems += "<sup " + addInlines() + ">" + ptext + "</sup>\n";
+			case 'sub': case'sup': case 'code': case 'nav': case 'blockquote':
+				elems += simpleHTML(t.type,t.value)
 				break;
 			case 'marquee':
 				var ptext = parseText(t.value);
 				elems += "<marquee direction='"+t.direction+"'>" + ptext + "</marquee>\n";
 				break;
-			case 'navigation':
-				var ptext = parseText(t.value);
-				elems += "<nav>" + ptext + "</nav>\n";
-				break;
 			case 'comment':
 				elems += "<!--" + t.value + "-->\n";
-				break;
-			case 'code':
-				elems += "<code " + addInlines() + ">" + t.value + "</code>\n";
 				break;
 			case 'image':
 				elems += "<img " + addInlines() + "alt='" + t.alt + "' src='" + t.url + "' >\n";
@@ -471,11 +449,8 @@ var meno = (function () {
 			case 'closecontainer':
 				elems += "</" + t.tag + ">\n";
 				break;
-			case 'return':
-				elems += "\n<br>\n";
-				break;
-			case 'line':
-				elems += "\n <hr " + addInlines() + "> \n";
+			case 'br': case 'hr':
+				elems += "\n<"+t.type+(t.type=="hr"?addInlines():"")+">\n";
 				break;
 			case 'colorline':
 				elems += "\n<div meno-hr " +
@@ -487,9 +462,9 @@ var meno = (function () {
 					style = {};
 				} else if (styleList.indexOf(t.name) != -1) {
 					style[t.name] = t.value;
-				} else if (attrList.indexOf(t.name) != -1) {
+				} //else if (attrList.indexOf(t.name) != -1) {
 					attr[t.name] = t.value;
-				}
+				//}
 				break;
 			default:
 				elems = elems;
@@ -505,7 +480,7 @@ var meno = (function () {
 		return inner;
 	};
 
-	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno [meno-inblock],.meno nav,.meno ol,.meno ul{display:inline-block}.meno textarea{resize:none}.meno h1,h2,h3,h4,h5,h6{margin-bottom:-10px}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3;border-top:1px solid #d3d3d3}.meno article{font-family:Consolas}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote:before{content:''' '}.meno blockquote:after{content:' '''}.meno ul{padding:5px;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ul ol,.meno ul ul{border:none;padding:2px;margin-left:20px}.meno ul>li{font-size:1.2em;font-weight:700;list-style-type:none}.meno ul>li:before{content:'| '}.meno ul ul>li{font-size:1.1em;font-weight:700;color:#696969}.meno ul ul>li:before{content:': ';color:#000}.meno ul ul ul>li{font-size:1.05em;font-weight:400;color:grey}.meno ul ul ul>li:before{content:'· ';color:#000}.meno ul ul ul ul>li{font-size:1em;font-weight:400;color:#000}.meno ul ul ul ul>li:before{content:'- ';color:#000}.meno ol{padding:5px;list-style-position:inside;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ol ol,.meno ol ul{border:none;padding:2px;margin-left:20px}.meno ol>li{font-size:1.2em;font-weight:700;border-bottom:1px dashed #d3d3d3}.meno ol ol>li{font-size:1.1em;font-weight:700;color:#696969;border-bottom:none}.meno ol ol ol>li{font-size:1.05em;font-weight:400;color:grey}.meno ol ol ol ol>li{font-size:1em;font-weight:400;color:#000}.meno [meno-hr]{height:2px;margin:1em 0}.meno [meno-underline]{text-decoration:underline}.meno [meno-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [meno-tip]::after{content:attr(meno-tip);font-size:13px;min-width:100px;min-heigh:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px;position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s}.meno [meno-tip]:hover::after{opacity:1;visibility:visible}.meno [meno-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
+	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno [meno-inblock],.meno nav,.meno ol,.meno ul{display:inline-block}.meno textarea{resize:none}.meno h1,h2,h3,h4,h5,h6{margin-bottom:-10px}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3;border-top:1px solid #d3d3d3}.meno article{font-family:Consolas}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote:before{content:''' '}.meno blockquote:after{content:' '''}.meno ul{padding:5px;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ul ol,.meno ul ul{border:none;padding:2px;margin-left:20px}.meno ul>li{font-size:1.2em;font-weight:700;list-style-type:none}.meno ul>li:before{content:'| '}.meno ul ul>li{font-size:1.1em;font-weight:700;color:#696969}.meno ul ul>li:before{content:': ';color:#000}.meno ul ul ul>li{font-size:1.05em;font-weight:400;color:grey}.meno ul ul ul>li:before{content:'Â· ';color:#000}.meno ul ul ul ul>li{font-size:1em;font-weight:400;color:#000}.meno ul ul ul ul>li:before{content:'- ';color:#000}.meno ol{padding:5px;list-style-position:inside;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ol ol,.meno ol ul{border:none;padding:2px;margin-left:20px}.meno ol>li{font-size:1.2em;font-weight:700;border-bottom:1px dashed #d3d3d3}.meno ol ol>li{font-size:1.1em;font-weight:700;color:#696969;border-bottom:none}.meno ol ol ol>li{font-size:1.05em;font-weight:400;color:grey}.meno ol ol ol ol>li{font-size:1em;font-weight:400;color:#000}.meno [meno-hr]{height:2px;margin:1em 0}.meno [meno-underline]{text-decoration:underline}.meno [meno-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [meno-tip]::after{content:attr(meno-tip);font-size:13px;min-width:100px;min-heigh:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px;position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s}.meno [meno-tip]:hover::after{opacity:1;visibility:visible}.meno [meno-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
 
 	m.addCSS= function () {
 		var styl = document.createElement("style");
