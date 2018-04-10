@@ -40,14 +40,10 @@ Meno is **minimal**, it only uses these 9 characters `]:-<[;>^_` yet it is handy
 #### Specials tags:
 - `---` = horizontal line
 - `---color` = horizontal colored line (color can be a name or a rgb())
-
-- `_tag_(classname)` = this opens a html container with an optional classname.
-- `___` = close the opened container.
-
+- - `_tag_(classname)` = this opens a html container with an optional classname.
+- - `___` = close the opened container.
 - `[ text : hint ]` display a hint box when mouse is over the text.
-
-- `<> text <>` create a `nav` element.
-
+- - `<> text <>` create a `nav` element.
 - `_attr:val` = This sets the _attr_ of all the next elements to be _val_.
 - `_attr:` = This reset the _attr_ so the next elements won't have it.
 - `_:` = This reset all the _attr_.
