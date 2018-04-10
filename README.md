@@ -28,8 +28,9 @@ Meno is **minimal**, it only uses these 9 characters `]:-<[;>^_` yet it is handy
 - `^^word` = inline supertext word
 - `__word` = inline subtext word
 
-**Group of words can be styled with the use of brackets:**
-- `x[styled inline text]`
+**Group of words can be styled in two ways**
+- with the use of brackets: `x[styled inline text]`
+- by linking the words with underscores `;this_is_a_code_line` (the underscores will be replaced by spaces)
 
 #### Lists:
 - `-` = begin a dotted list
@@ -39,18 +40,13 @@ Meno is **minimal**, it only uses these 9 characters `]:-<[;>^_` yet it is handy
 #### Specials tags:
 - `---` = horizontal line
 - `---color` = horizontal colored line (color can be a name or a rgb())
----
 - `_tag_(classname)` = this opens a html container with an optional classname.
 - `___` = close the opened container.
----
 - `[ text : hint ]` display a hint box when mouse is over the text.
----
 - `<> text <>` create a `nav` element.
----
 - `_attr:val` = This sets the _attr_ of all the next elements to be _val_.
 - `_attr:` = This reset the _attr_ so the next elements won't have it.
 - `_:` = This reset all the _attr_.
-- Supported attributes are: `title, id, name, class`.
 
 
 ## Methods
@@ -62,9 +58,9 @@ Meno is **minimal**, it only uses these 9 characters `]:-<[;>^_` yet it is handy
 
 ### Internal Meno
 Use a `<script>` tag with `type=text/meno` to write internal meno articles:
-``` 
+```html
 <script type="text/meno">
   //Put your meno here
-<script>
+</script>
 ```
-- `meno.convert()` = Converts all the `<script type="text/meno">` into articles.
+- `meno.convert()` = Converts all the `<script type="text/meno">` into html.
