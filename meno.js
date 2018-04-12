@@ -88,39 +88,43 @@ var meno = (function () {
 						value: match[3]
 					};
 					if (match[2]) { data.isBlock = true; }
-				} else if (match = /^(-{3,})$/.exec(input)) {
+				} else if (match = /^-{3,}([^ -]+)?$/.exec(input)) {
 					expr = {
 						type: "hr"
 					};
-				} else if (match = /^(-{3,})([^ -]+)/.exec(input)) {
+					if(match[1]!=undefined){
+						expr.type = "colorline";
+						expr.value = match[1];
+					}
+				}  
+				else if (match = /^__(-{2,}|:{2,}|\]{2,})_/.exec(input)) {
 					expr = {
-						type: "colorline",
-						value: match[2]
-					};
-				} else if (match = /^_(.*):(.*)/.exec(input)) {
+							type: "columns",
+							rule: rule(match[1][0]),
+							count: match[1].length,
+							tag: "div"
+						   };
+					data.container.push("div");
+				}
+				else if (match = /^_(.*):(.*)/.exec(input)) {
 					expr = {
 						type: "attr",
 						name: match[1],
 						value: match[2]
 					};
-				} else if (match = /^<-(.*)<-/.exec(input)) {
+				} else if (match = /^(<-|->)(.*)\1/.exec(input)) {
 					expr = {
 						type: "marquee",
-						value: match[1],
-						direction: "left"
+						value: match[2],
+						direction: match[1]=="<-"?"left":"right"
 					};
-				} else if (match = /^->(.*)->/.exec(input)) {
-					expr = {
-						type: "marquee",
-						value: match[1],
-						direction: "right"
-					};
-				} else if (match = /^<>(.*)<>/.exec(input)) {
+				}
+				else if (match = /^<>(.*)<>/.exec(input)) {
 					expr = {
 						type: "nav",
 						value: match[1]
 					};
-				} else if (match = /^_([^_]+)_(.*)/.exec(input)) {
+				} else if (match = /^__([^_ ]+)_(.*)/.exec(input)) {
 					expr = {
 						type: "container",
 						tag: match[1]
@@ -131,105 +135,72 @@ var meno = (function () {
 							expr.id = match[2].slice(1,match[2].length);
 						}else{expr.classname = match[2];}
 					}
-				} else if (input == "___" && data.container) {
+				} 
+				else if (input == "____" && data.container.length > 0) {
 					expr = {
 						type: "closecontainer",
 						tag: data.container.pop()
 					};
-				} else if (match = /^><$/.exec(input)) {
-					expr = { 
-						type: "raw",
-						value: ""
+				} else if (match = /^<([\w]+?):([^>]+)>/.exec(input)) {
+					expr = {
+						type: "audio",
+						mime: getMIME(match[1]),
+						src: match[2]
 					};
-					data.isRaw = true;
-				}  else if (match = /^><(.+)/.exec(input)) {
-					expr = { 
+				} else if (match = /^:(.*?)>(\[??)?(.+)/.exec(input)) {
+					expr = {
+						type: "details",
+						value: match[3]
+					};
+					if (is(match[1])) {expr.title = match[1];}
+					if (match[2]) { data.isBlock = true; }
+				} else if (match = /^><(.?)$/.exec(input)) {
+					expr = {
 						type: "raw",
 						value: match[1]
 					};
-				}  
-				else if (match = /^<_(\[)? (.+)/.exec(input)) {
-					expr = { 
-						type: "sup",
-						value: match[2]
-					};
-					if (match[1]) { data.isBlock = true; }
-				}  
-				else if (match = /^>_(\[)? (.+)/.exec(input)) {
-					expr = { 
-						type: "sub",
-						value: match[2]
-					};
-					if (match[1]) { data.isBlock = true; }
-				}  
-				else if (match = /^>([^>]+)(<|>)([^ ;]+)(.*)/.exec(input)) {
-					expr = {
-						type: "link",
-						url: match[3]
-					};
-					if(match[2]=='<') expr.target = '_self';
-					if (match[1] != " ") { expr.value = match[1];
-					} else { expr.value = match[3]; }
-					if(match[4]){
-						var down;
-						if (down = /;([^;]+);/.exec(match[4])) {
-							expr.download = down[1];
-						}
+					if (is(match[1])) {
+						data.isRaw = true;
+						expr.value = "";
 					}
-				} else if (match = /^\[([^\[]*)\[(.+)/g.exec(input)) {
+				}
+				else if (match = /^\[([^\[]*)\[(.+)/g.exec(input)) {
 					expr = {
 						type: "image",
 						alt: match[1],
 						url: match[2]
 					};
-				} else if (match = /^(-*) (.+)/.exec(input)) {
+				}
+				else if (match = /^(-+|\]+|\^+) (.+)/.exec(input)) {
+					var h = { "-":"u", "]":"o","^":"f"};
 					expr = {
 						type: "list-item",
-						list: "u",
+						list: h[match[1][0]],
 						value: match[2],
 						indent: match[1].length
 					};
-				} else if (match = /^(\]*) (.+)/.exec(input)) {
+				}
+				else if (match = /^(<|-_-|;)(\[)? (.+)/.exec(input)) {
 					expr = {
-						type: "list-item",
-						list: "o",
-						value: match[2],
-						indent: match[1].length
+						type: tToWord(match[1]),
+						value: match[3]
 					};
-				} else if (match = /^<(\[)? (.+)/.exec(input)) {
+					if (match[2]) { data.isBlock = true; }
+				} 
+				else if (input == "-" || input == ":") {
 					expr = {
-						type: "blockquote",
-						value: match[2]
+						type: tToWord(input)
 					};
-					if (match[1]) { data.isBlock = true; }
-				} else if (match = /^-_-(\[)? (.+)/.exec(input)) {
-					expr = {
-						type: "comment",
-						value: match[2]
-					};
-					if (match[1]) { data.isBlock = true; }
-				} else if (match = /^;(\[)? (.+)/m.exec(input)) {
-					expr = {
-						type: "code",
-						value: match[2]
-					};
-					if (match[1]) { data.isBlock = true; }
-				} else if (input == "-") {
-					expr = {
-						type: "br"
-					};
-				} else if (input == ":") {
-					expr = {
-						type: "blank"
-					};
-				} else if (match = /^(.+)/.exec(input)) {
+				}
+				else if (match = /^(.+)/.exec(input)) {
 					expr = {
 						type: "text",
 						value: match[1]
 					};
-				} else {
+				}
+				else {
 					expr = {
-						type: "break"
+						type: ""
 					};
 				}
 				if (expr.type != "blank") {
@@ -245,35 +216,62 @@ var meno = (function () {
 		}
 		return tree;
 	};
+	
+	is = function(str){return str.trim().length>1?true:false;}
+	rule = (function(){
+		var h = {":":"4px dotted lightgrey","]":"1px solid lightgrey"}
+		return function(c){
+			if(h[c])return h[c];
+			return false;
+		}
+	})();
+	
+	tToWord = (function(){ 
+		var h = {
+			"-":"br",
+			":":"blank",
+			"<":"blockquote",
+			"-_-":"comment",
+			";":"code"}; 
+		return function(t){return (h[t]||t);}; 
+	})();
+	
+	getMIME = (function(){
+		var h = {"mp3":"mpeg","ogg":"ogg"};
+		return function(m){
+			return "audio/"+h[m];
+		}
+	})();
 
+	doParseInline = function(raw,tag,el){
+		raw = raw.replace(Reg.w(tag), Rep.word.bind(Rep,el));
+		raw = raw.replace(Reg.b(tag), Rep.bloc.bind(Rep,el));
+		return raw;
+	}
+	
 	parseText= function (parsed) {
 		
 		parsed = parsed.replace(/</g,"&lt;");
-								//(^>| >)([^>]+)(&lt;|>)([^ ]+)( |$)
-		parsed = parsed.replace(/(?: |^)>([^>]+)(&lt;|>)([^ ]+)(?: |$)/gm, Rep.link);
 		
-		parsed = parsed.replace(/(?: |^)\[([^\]:]+?):(.+?)\](?: |$|)/gm, Rep.hint);
+		parsed = parsed.replace(Reg.l(), Rep.link);
 		
-		parsed = parsed.replace(Reg.w("__"), Rep.word.bind(Rep,"sub"));
-		parsed = parsed.replace(Reg.b("__"), Rep.bloc.bind(Rep,"sub"));
+		parsed = parsed.replace(/(?:^| )\[([^\]:]+?):(.+?)\](?: |$|)/gm, Rep.hint);
 		
-		parsed = parsed.replace(Reg.w("\\^\\^"), Rep.word.bind(Rep,"sup"));
-		parsed = parsed.replace(Reg.b("\\^\\^"), Rep.bloc.bind(Rep,"sup"));
-		
-		parsed = parsed.replace(Reg.w("\\^"), Rep.word.bind(Rep,"i"));
-		parsed = parsed.replace(Reg.b("\\^"), Rep.bloc.bind(Rep,"i"));
-		
-		parsed = parsed.replace(Reg.w("&lt;&lt;"), Rep.word.bind(Rep,"b"));
-		parsed = parsed.replace(Reg.b("&lt;&lt;"), Rep.bloc.bind(Rep,"b"));
-		
-		parsed = parsed.replace(Reg.w("&lt;"), Rep.word.bind(Rep,"q"));
-		parsed = parsed.replace(Reg.b("&lt;"), Rep.bloc.bind(Rep,"q"));
-		
-		parsed = parsed.replace(Reg.w(">>"), Rep.word.bind(Rep,"small"));
-		parsed = parsed.replace(Reg.b(">>"), Rep.bloc.bind(Rep,"small"));
-		
-		parsed = parsed.replace(Reg.w("_"), Rep.word.bind(Rep,"u"));
-		parsed = parsed.replace(Reg.b("_"), Rep.bloc.bind(Rep,"u"));
+		var inlines = [
+						"__",		"sub", 
+						"\\^\\^",	"sup",
+						"\\^",		"i",
+						"&lt;&lt;",	"b",
+						"&lt;",		"q",
+						">>",		"small",
+						"_",		"u",
+						"--",		"del", 
+						";;",		"samp",
+						"->",		"mark"
+					  ];
+		for (var i = 0 ; i<inlines.length ; i+=2){
+			parsed = doParseInline(parsed,inlines[i],inlines[i+1]);
+		}
 		
 		parsed = parsed.replace(Reg.w(";"), Rep.wcode);
 		parsed = parsed.replace(Reg.b(";"), Rep.code);
@@ -296,6 +294,7 @@ var meno = (function () {
 	Reg = {
 		w: function(tag){return new RegExp("(?: |^)"+tag+"([^ \\n\\.\\[]+)(?: |$)","g");},
 		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","g");},
+		l: function(tag){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |\200|$)","gm");},
 	};
 
 	Rep= {
@@ -307,15 +306,16 @@ var meno = (function () {
 		
 		raw: function (m, cont) { return cont; },
 		
-		// quote: function (match, tag, cont, rest) { return " "+Rep.getHTML("q",cont) + rest; }, // bold: function (match, tag, cont, rest) { return " "+Rep.getHTML("strong",cont) + rest; }, // italic: function (match, tag, cont, rest) { return " "+Rep.getHTML("i",cont) + rest; }, // small: function (match, tag, cont, rest) { return " "+Rep.getHTML("small",cont) + rest; }, // sub: function (match, tag, cont, rest) { return Rep.getHTML("sub",cont) + rest; }, // sup: function (match, tag, cont, rest) { return Rep.getHTML("sup",cont) + rest; },
-		
 		code: function (m, cont) { return " <code meno-inblock >" + escape(cont) + "</code> "; },
 		wcode: function (m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
 		
 		underline: function (m, cont) { return " <span meno-underline>" + cont + "</span>" + rest; },
 		
-		link: function (match, txt, mod, url) {
-			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + addInlines() + ">" + (txt==" "?url:parseLink(txt)) + "</a> ";
+		link: function (match, txt, mod, url, down, rest) {
+			console.log(txt, mod, url, down);
+			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + 
+					addInlines() + (down?'download="'+down+'"':"") +">" + 
+					(txt==" "?url:parseLink(txt)) + "</a>"+rest;
 		},
 		
 		image: function (match, alt, url) { return Rep.getImg(alt,url); },
@@ -324,8 +324,6 @@ var meno = (function () {
 		hint: function (match, text, hint) {
 			return " <span meno-tip=\""+hint+"\">" + parseText(text) + "</span>";
 		},
-		
-		lt: function (match, cont) { return "&lt;" + cont; },
 		
 		wordspace: function(str){return str.replace(/(_)/gm," ");},
 		
@@ -340,7 +338,7 @@ var meno = (function () {
 	
 	attr= {};
 	style= {};
-	attrList= ["title", "id", "name","class"];
+	//attrList= ["title", "id", "name","class"];
 	styleList= ["cursor", "color", "font", "float"];
 
 	addInlines= function(){
@@ -351,7 +349,7 @@ var meno = (function () {
 	};
 	addAttr= function () {
 		var k = Object.keys(attr);
-		if(k.length==0)return "";
+		if(k.length<1)return "";
 		var t = " ";
 		for (i in k) {
 			var v = attr[k[i]];
@@ -363,7 +361,7 @@ var meno = (function () {
 	};
 	addStyle= function () {
 		var k = Object.keys(style);
-		if(k.length==0)return "";
+		if(k.length<1)return "";
 		var t = ' style="';
 		for (i in k) {
 			var v = style[k[i]];
@@ -375,14 +373,14 @@ var meno = (function () {
 		return t;
 	};
 	
-	getTab = function(n){ var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t; }
+	getTab = function(n){ var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t; };
 	
 	simpleHTML = function(tag,val,noin){ 
 		return "<"+tag+(!noin?addInlines():"")+">"+parseText(val)+"</"+tag+">\n"; 
 	}
 	
-	//autoHTML = function(tag,noin){ return "\n<"+tag+(!noin?addInlines():"")+">\n"; }
-
+	support = function(pro,val){return '-webkit-'+pro+':'+val+';'+'-moz-'+pro+':'+val+';'+pro+':'+val+';';};
+	
 	produceHTML= function (tree) {
 		var i = 0;
 		var t = {};
@@ -392,19 +390,23 @@ var meno = (function () {
 		for (i in tree) {
 			t = tree[i];
 			if (t.type == "list-item" ) {
-				if (t.indent < ulist) {
-					for (var l = 0; l < ulist - t.indent; l++) {
-						elems += listArr.pop();
+				if(t.list!="f"){
+					if (t.indent < ulist) {
+						for (var l = 0; l < ulist - t.indent; l++) {
+							elems += listArr.pop();
+						}
 					}
-				}
-				if (t.indent > ulist) {
-					for (var l = 0; l < t.indent - ulist; l++) {
-						elems += getTab(t.indent-1)+"<" + t.list + "l>\n";
-						listArr.push(getTab(t.indent-1)+"</" + t.list + "l>\n");
+					if (t.indent > ulist) {
+						for (var l = 0; l < t.indent - ulist; l++) {
+							elems += getTab(t.indent-1)+"<" + t.list + "l>\n";
+							listArr.push(getTab(t.indent-1)+"</" + t.list + "l>\n");
+						}
 					}
-				}
 				elems += getTab(t.indent)+"<li>" + parseText(t.value) + "</li>\n";
+				//console.log(ulist, t.indent, t.list);
 				ulist = t.indent;
+				}else
+					elems += getTab(t.indent)+"\t"+parseText(t.value) + "<br>\n";
 			} else {
 				for (var l = 0; l < listArr.length ; l++) {
 					elems += listArr.pop();
@@ -434,27 +436,32 @@ var meno = (function () {
 			case 'image':
 				elems += "<img " + addInlines() + "alt='" + t.alt + "' src='" + t.url + "' >\n";
 				break;
-			case 'link':
-				elems += "<a " + addInlines() + "href='" + t.url + "'" +
-				" target='"+(t.target ? t.target:'_blank')+"'";
-				if(t.download){elems+= " download='"+ t.download+"'";}
-				elems += " >" +  parseLink(t.value) + "</a>\n";
-				break;
 			case 'container':
-				elems += "\n<" + t.tag;
-				if (t.classname) { elems += " class='" + t.classname + "'"; }
-				if (t.id) { elems += " id='" + t.id + "'"; }
-				elems += " >\n";
+				elems += "\n<" + t.tag + 
+				(t.classname?" class='"+t.classname+"'":"") +
+				(t.id?" id='"+t.id+"'":"") + " >\n";
+				break;
+			case 'columns':
+				elems += '\n<div meno-col style="'+ 
+				support("column-count",t.count)+
+				(t.rule?support("column-rule",t.rule):"")+'">\n';
 				break;
 			case 'closecontainer':
 				elems += "</" + t.tag + ">\n";
 				break;
 			case 'br': case 'hr':
-				elems += "\n<"+t.type+(t.type=="hr"?addInlines():"")+">\n";
+				elems += "<"+t.type+(t.type=="hr"?addInlines():"")+">\n";
 				break;
 			case 'colorline':
 				elems += "\n<div meno-hr " +
 				"style='background-color:" + t.value + "'></div>\n";
+				break;
+			case 'audio':
+				elems += '\n<audio controls type="'+ t.mime + '" src="' + t.src + '"></audio>\n';
+				break;
+			case 'details':
+				elems += '\n<details>\n'+(t.title?'<summary>'+t.title+'</summary>\n':'')+
+				'<span>'+(t.value.replace(/(\200)/g, "<br>"))+'</span>\n</details>\n';
 				break;
 			case 'attr':
 				if (t.name == "") {
@@ -462,25 +469,25 @@ var meno = (function () {
 					style = {};
 				} else if (styleList.indexOf(t.name) != -1) {
 					style[t.name] = t.value;
-				} //else if (attrList.indexOf(t.name) != -1) {
-					attr[t.name] = t.value;
-				//}
+				} else { attr[t.name] = t.value; }
 				break;
 			default:
 				elems = elems;
 			}
 		}
+		attr= {};
+		style= {};
 		return elems;
 	};
 
-	parse= function (lines) {
+	parse= function(lines) {
 		var val;
 		val = parseRaw(lines);
 		var inner = produceHTML(val);
 		return inner;
 	};
 
-	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno [meno-inblock],.meno nav,.meno ol,.meno ul{display:inline-block}.meno textarea{resize:none}.meno h1,h2,h3,h4,h5,h6{margin-bottom:-10px}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3;border-top:1px solid #d3d3d3}.meno article{font-family:Consolas}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote:before{content:''' '}.meno blockquote:after{content:' '''}.meno ul{padding:5px;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ul ol,.meno ul ul{border:none;padding:2px;margin-left:20px}.meno ul>li{font-size:1.2em;font-weight:700;list-style-type:none}.meno ul>li:before{content:'| '}.meno ul ul>li{font-size:1.1em;font-weight:700;color:#696969}.meno ul ul>li:before{content:': ';color:#000}.meno ul ul ul>li{font-size:1.05em;font-weight:400;color:grey}.meno ul ul ul>li:before{content:'Â· ';color:#000}.meno ul ul ul ul>li{font-size:1em;font-weight:400;color:#000}.meno ul ul ul ul>li:before{content:'- ';color:#000}.meno ol{padding:5px;list-style-position:inside;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ol ol,.meno ol ul{border:none;padding:2px;margin-left:20px}.meno ol>li{font-size:1.2em;font-weight:700;border-bottom:1px dashed #d3d3d3}.meno ol ol>li{font-size:1.1em;font-weight:700;color:#696969;border-bottom:none}.meno ol ol ol>li{font-size:1.05em;font-weight:400;color:grey}.meno ol ol ol ol>li{font-size:1em;font-weight:400;color:#000}.meno [meno-hr]{height:2px;margin:1em 0}.meno [meno-underline]{text-decoration:underline}.meno [meno-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [meno-tip]::after{content:attr(meno-tip);font-size:13px;min-width:100px;min-heigh:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px;position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s}.meno [meno-tip]:hover::after{opacity:1;visibility:visible}.meno [meno-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
+	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno textarea{resize:none}.meno details{border-bottom:2px dotted #d3d3d3;border-right:2px dotted #d3d3d3}.meno details span{color:grey;font-size:.9em;padding-left:20px;display:block}.meno [meno-inblock],.meno nav,.meno ol,.meno ul{display:inline-block}.meno h1,h2,h3,h4,h5,h6{margin-bottom:0}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3;border-top:1px solid #d3d3d3}.meno article{font-family:Consolas}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote:before{content:''' '}.meno blockquote:after{content:' '''}.meno ul{padding:5px;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ul ol,.meno ul ul{border:none;padding:2px;margin-left:20px}.meno ul>li{font-size:1.2em;font-weight:700;list-style-type:none}.meno ul>li:before{content:'| '}.meno ul ul>li{font-size:1.1em;font-weight:700;color:#696969}.meno ul ul>li:before{content:': ';color:#000}.meno ul ul ul>li{font-size:1.05em;font-weight:400;color:grey}.meno ul ul ul>li:before{content:'· ';color:#000}.meno ul ul ul ul>li{font-size:1em;font-weight:400;color:#000}.meno ul ul ul ul>li:before{content:'- ';color:#000}.meno ol{padding:5px;list-style-position:inside;border-top:2px solid #d3d3d3;border-bottom:2px solid #d3d3d3}.meno ol ol,.meno ol ul{border:none;padding:2px;margin-left:20px}.meno ol>li{font-size:1.2em;font-weight:700;border-bottom:1px dashed #d3d3d3}.meno ol ol>li{font-size:1.1em;font-weight:700;color:#696969;border-bottom:none}.meno ol ol ol>li{font-size:1.05em;font-weight:400;color:grey}.meno ol ol ol ol>li{font-size:1em;font-weight:400;color:#000}.meno [meno-hr]{height:2px;margin:1em 0}.meno [meno-col] p{margin-top:0}.meno [meno-underline]{text-decoration:underline}.meno [meno-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [meno-tip]::after{content:attr(meno-tip);font-size:13px;min-width:100px;min-heigh:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px;position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s}.meno [meno-tip]:hover::after{opacity:1;visibility:visible}.meno [meno-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
 
 	m.addCSS= function () {
 		var styl = document.createElement("style");
@@ -501,8 +508,7 @@ var meno = (function () {
 		for (var i = 0; i < menos.length; i++) {
 			var raw = menos[i].innerHTML;
 			var art = document.createElement("article");
-			art.className = 'meno';
-			
+			//art.className = 'meno';
 			
 			for(var a=0;a<menos[i].attributes.length;a++){
 				var attr = menos[i].attributes[a];
@@ -510,7 +516,6 @@ var meno = (function () {
 					art.setAttribute(attr.name,attr.value);
 			}
 			art.className += ' meno';
-			
 			menos[i].parentNode.insertBefore(art, menos[i]);
 			art.innerHTML = m.parsed(raw);
 			menos[i].parentNode.removeChild(menos[i]);

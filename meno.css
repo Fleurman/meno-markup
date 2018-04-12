@@ -12,7 +12,18 @@
     resize: none;
 }
 
-.meno h1,h2,h3,h4,h5,h6 {margin-bottom:-10px;}
+.meno details {
+	border-bottom:2px dotted lightgrey;
+	border-right:2px dotted lightgrey;
+}
+.meno details span {
+	color: grey;
+	font-size:0.9em;
+	padding-left:20px;
+	display:block;
+}
+
+.meno h1,h2,h3,h4,h5,h6 {margin-bottom:0px;}
 
 .meno a {
 	color:skyblue;
@@ -120,6 +131,9 @@
 .meno [meno-hr]{
 	height:2px;
 	margin:1em 0;
+}
+.meno [meno-col] p{
+	margin-top:0;
 }
 .meno [meno-inblock]{
 	display:inline-block;
