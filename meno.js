@@ -322,7 +322,7 @@ var meno = (function () {
 		imageinline: function (match, alt, url) { return Rep.getImg(alt,url,true); },
 		
 		hint: function (match, text, hint) {
-			return " <span meno-tip=\""+hint+"\">" + parseText(text) + "</span>";
+			return " <span meno-tip=\""+hint+"\">" + parseText(text) + "</span> ";
 		},
 		
 		wordspace: function(str){return str.replace(/(_)/gm," ");},
@@ -338,8 +338,8 @@ var meno = (function () {
 	
 	attr= {};
 	style= {};
-	//attrList= ["title", "id", "name","class"];
-	styleList= ["cursor", "color", "font", "float"];
+	attrList= ["class", "name", "title"];
+	styleList= ["cursor", "color", "font", "float", "background"];
 
 	addInlines= function(){
 		var t = "";
@@ -457,10 +457,10 @@ var meno = (function () {
 				"style='background-color:" + t.value + "'></div>\n";
 				break;
 			case 'audio':
-				elems += '\n<audio controls type="'+ t.mime + '" src="' + t.src + '"></audio>\n';
+				elems += '\n<audio'+addInlines()+'controls type="'+ t.mime + '" src="' + t.src + '"></audio>\n';
 				break;
 			case 'details':
-				elems += '\n<details>\n'+(t.title?'<summary>'+t.title+'</summary>\n':'')+
+				elems += '\n<details'+addInlines()+'>\n'+(t.title?'<summary>'+t.title+'</summary>\n':'')+
 				'<span>'+(t.value.replace(/(\200)/g, "<br>"))+'</span>\n</details>\n';
 				break;
 			case 'attr':
@@ -469,14 +469,16 @@ var meno = (function () {
 					style = {};
 				} else if (styleList.indexOf(t.name) != -1) {
 					style[t.name] = t.value;
-				} else { attr[t.name] = t.value; }
+				} else if (attrList.indexOf(t.name) != -1) { 
+					attr[t.name] = t.value; 
+				}
 				break;
 			default:
 				elems = elems;
 			}
 		}
-		attr= {};
-		style= {};
+		attr = {};
+		style = {};
 		return elems;
 	};
 
@@ -502,13 +504,12 @@ var meno = (function () {
 			document.head.appendChild(styl);
 		}
 	};
-
+	
 	m.convert= function () {
 		var menos = document.querySelectorAll("script[type='text/meno']");
 		for (var i = 0; i < menos.length; i++) {
 			var raw = menos[i].innerHTML;
 			var art = document.createElement("article");
-			//art.className = 'meno';
 			
 			for(var a=0;a<menos[i].attributes.length;a++){
 				var attr = menos[i].attributes[a];
