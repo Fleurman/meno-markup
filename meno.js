@@ -312,10 +312,10 @@ var meno = (function () {
 		underline: function (m, cont) { return " <span meno-underline>" + cont + "</span>" + rest; },
 		
 		link: function (match, txt, mod, url, down, rest) {
-			console.log(txt, mod, url, down);
+			//console.log(txt, mod, url, down);
 			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + 
 					addInlines() + (down?'download="'+down+'"':"") +">" + 
-					(txt==" "?url:parseLink(txt)) + "</a>"+rest;
+					(txt==" "?url:parseLink(txt)) + "</a> "+rest;
 		},
 		
 		image: function (match, alt, url) { return Rep.getImg(alt,url); },
