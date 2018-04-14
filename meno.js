@@ -342,7 +342,7 @@ var meno = (function () {
 	styleList= ["cursor", "color", "font", "float", "background"];
 
 	addInlines= function(){
-		var t = "";
+		var t = " ";
 		t += addAttr();
 		t += addStyle();
 		return t;
