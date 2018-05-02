@@ -1,5 +1,5 @@
 var meno = (function () {
-	var m = { version: "0.9.8" };
+	var m = { version: "0.9.99" };
 	m.checkUpdates = function(){
 		loadFile(function (js) {
 			try {
@@ -23,26 +23,22 @@ var meno = (function () {
 		req.send(null);
 	};
 
-	m.putRaw= function (target, k, file) {
-		loadFile(function (response) {
-			target[k] = response;
-		}, file);
-	};
-
 	m.writeTo= function (target, file) {
 		loadFile(function (response) {
-			var raw = response;
+			var raw = response.replace(/\/\/.+$/gm,"\n");
 			var lines = raw.split(/\r\n|\r|\n/);
 			putIn(target, parse(lines));
 		}, file);
 	};
 
 	m.displayTo= function (target, text) {
+		text = text.replace(/\/\/.+$/gm,"\n");
 		var lines = text.split(/\r\n|\r|\n/);
 		putIn(target, parse(lines));
 	};
 
 	m.parsed= function (text) {
+		text = text.replace(/\/\/.+$/gm,"\n");
 		var lines = text.split(/\r\n|\r|\n/);
 		return parse(lines);
 	};
@@ -64,11 +60,11 @@ var meno = (function () {
 		while (lines[data.id] !== undefined) {
 			var input = lines[data.id].trim(),match,expr;
 			if (data.isRaw == true) {
-				if (input == '><') {
+				if (input == ';;;') {
 					data.blockid++;
 					data.isRaw = false;
 				} else {
-					tree[data.blockid].value += input;
+					tree[data.blockid].value += input+"\n";
 				}
 			} else if (data.isBlock == true) {
 				if (match = /^(.*)(\]?)/.exec(input)) {
@@ -96,8 +92,8 @@ var meno = (function () {
 						expr.type = "colorline";
 						expr.value = match[1];
 					}
-				}  
-				else if (match = /^__(-{2,}|:{2,}|\]{2,})_/.exec(input)) {
+				}
+				else if (match = /^\[(-{2,}|:{2,}|\]{2,})\[/.exec(input)) {
 					expr = {
 							type: "columns",
 							rule: rule(match[1][0]),
@@ -106,7 +102,16 @@ var meno = (function () {
 						   };
 					data.container.push("div");
 				}
-				else if (match = /^_(.*):(.*)/.exec(input)) {
+				else if (match = /^\[([^\[]+)\[(.*)$/.exec(input)) {
+					expr = {
+						type: "container",
+						tag: match[1],
+						inline: match[2] || ""
+					};
+					data.container.push(match[1]);
+					//console.log("Custom Bloc begins: " + expr.tag + " - " + expr.inline);
+				} 
+				else if (match = /^_([a-zA-Z-]*):(.*)$/.exec(input)) {
 					expr = {
 						type: "attr",
 						name: match[1],
@@ -121,22 +126,11 @@ var meno = (function () {
 				}
 				else if (match = /^<>(.*)<>/.exec(input)) {
 					expr = {
-						type: "nav",
+						type: "bloc",
+						tag: "nav",
 						value: match[1]
 					};
-				} else if (match = /^__([^_ ]+)_(.*)/.exec(input)) {
-					expr = {
-						type: "container",
-						tag: match[1]
-					};
-					data.container.push(match[1]);
-					if (match[2]) {
-						if(match[2][0]=="#"){
-							expr.id = match[2].slice(1,match[2].length);
-						}else{expr.classname = match[2];}
-					}
-				} 
-				else if (input == "____" && data.container.length > 0) {
+				} else if (input == "]]" && data.container.length > 0) {
 					expr = {
 						type: "closecontainer",
 						tag: data.container.pop()
@@ -154,17 +148,15 @@ var meno = (function () {
 					};
 					if (is(match[1])) {expr.title = match[1];}
 					if (match[2]) { data.isBlock = true; }
-				} else if (match = /^><(.?)$/.exec(input)) {
+				} else if (match = /^;;;(.*)/.exec(input)) {
 					expr = {
 						type: "raw",
-						value: match[1]
+						value: "",
 					};
-					if (is(match[1])) {
-						data.isRaw = true;
-						expr.value = "";
-					}
+					//console.log(input + "=> Raw Bloc begins");
+					data.isRaw = true;
 				}
-				else if (match = /^\[([^\[]*)\[(.+)/g.exec(input)) {
+				else if (match = /^\[([^\[\]]*)\](.+)/g.exec(input)) {
 					expr = {
 						type: "image",
 						alt: match[1],
@@ -180,13 +172,14 @@ var meno = (function () {
 						indent: match[1].length
 					};
 				}
-				else if (match = /^(<|-_-|;)(\[)? (.+)/.exec(input)) {
+				else if (match = isBloc(input)) {
 					expr = {
-						type: tToWord(match[1]),
-						value: match[3]
+						type: "bloc",
+						tag: match.tag,
+						value: match[2]
 					};
-					if (match[2]) { data.isBlock = true; }
-				} 
+					if (match[1]) { data.isBlock = true; }
+				}
 				else if (input == "-" || input == ":") {
 					expr = {
 						type: tToWord(input)
@@ -226,6 +219,34 @@ var meno = (function () {
 		}
 	})();
 	
+	var blocTags =
+		[
+			"-_-",	"comment",
+			"<",	"blockquote",
+			";",	"code"
+		];
+	function isBloc(r){
+		var match;
+		for(var i = 0; i<blocTags.length ; i += 2){
+			var reg = new RegExp("^"+blocTags[i]+"(\\[)? (.+)");
+			if(match = reg.exec(r)){
+				match.tag = blocTags[i+1];
+				return match;
+			}
+		}
+		return false;
+	}
+	m.addBlocTag = function(t,e){
+		if(t && e){
+			addTag(blocTags,t,e)
+		}
+	}
+	function addTag(a,t,e){
+		t = t.replace(/</g,"&lt;");
+		t = t.replace(/\\/g,"\\");
+		a.push(t);
+		a.push(e);
+	}
 	tToWord = (function(){ 
 		var h = {
 			"-":"br",
@@ -249,38 +270,49 @@ var meno = (function () {
 		return raw;
 	}
 	
+	var inlineTags = 
+		[
+			"__",		"sub", 
+			"\\^\\^",	"sup",
+			"\\^",		"i",
+			"&lt;&lt;",	"b",
+			"&lt;",		"q",
+			">>",		"small",
+			"_",		"u",
+			"--",		"del", 
+			";;",		"samp",
+			"->",		"mark"
+		];
+	m.addInlineTag = function(t,e){
+		if(t && e){
+			addTag(inlineTags,t,e)
+		}
+	}
+
 	parseText= function (parsed) {
+		
 		
 		parsed = parsed.replace(/</g,"&lt;");
 		
-		parsed = parsed.replace(Reg.l(), Rep.link);
+		parsed = parsed.replace(Reg.l, Rep.link);
+		
+		parsed = parsed.replace(Reg.b(";;;"), Rep.raw);
+		
 		
 		parsed = parsed.replace(/(?:^| )\[([^\]:]+?):(.+?)\](?: |$|)/gm, Rep.hint);
 		
-		var inlines = [
-						"__",		"sub", 
-						"\\^\\^",	"sup",
-						"\\^",		"i",
-						"&lt;&lt;",	"b",
-						"&lt;",		"q",
-						">>",		"small",
-						"_",		"u",
-						"--",		"del", 
-						";;",		"samp",
-						"->",		"mark"
-					  ];
-		for (var i = 0 ; i<inlines.length ; i+=2){
-			parsed = doParseInline(parsed,inlines[i],inlines[i+1]);
+		for (var i = 0 ; i<inlineTags.length ; i+=2){
+			parsed = doParseInline(parsed,inlineTags[i],inlineTags[i+1]);
 		}
 		
 		parsed = parsed.replace(Reg.w(";"), Rep.wcode);
 		parsed = parsed.replace(Reg.b(";"), Rep.code);
 		
-		parsed = parsed.replace(/(?: |^)\[([^\[]+)\[([^ ]+)(?: |$)/gm, Rep.imageinline);
+		parsed = parsed.replace(/(?: |^)\[([^\[]+)\]([^ ]+)(?: |$)/gm, Rep.imageinline);
 		
-		parsed = parsed.replace(Reg.b(">\&lt;"), Rep.raw);
 		
 		parsed = parsed.replace(/(\200)/g, "<br>");
+		parsed = parsed.replace(/-:\s/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
 		
 		return unescape(parsed);
 	};
@@ -292,27 +324,26 @@ var meno = (function () {
 	};
 	
 	Reg = {
-		w: function(tag){return new RegExp("(?: |^)"+tag+"([^ \\n\\.\\[]+)(?: |$)","g");},
-		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","g");},
-		l: function(tag){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |\200|$)","gm");},
+		w: function(tag){return new RegExp("( |^|:)"+tag+"([^ \\n\\\[]+)(?: |$)","gm");},
+		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","gm");},
+		l: (function(){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |\200|$)","gm");})(),
 	};
 
-	Rep= {
-		getHTML: function(tag,cont){ return " <"+tag+">"+cont+"</"+tag+"> " },
+	Rep = {
+		getHTML: function(tag,cont,s){ return s+"<"+tag+">"+cont+"</"+tag+"> " },
 		
 		getImg: function(alt,url,line){
 			return ' <img alt="'+alt+'" src="'+url+'" '+(line ? 'style="display:inline;"' : "")+' title="'+alt+'" > ';
 		},
 		
-		raw: function (m, cont) { return cont; },
+		raw: function (m, cont) { return cont.replace(/&lt;/g,"<"); },
 		
 		code: function (m, cont) { return " <code meno-inblock >" + escape(cont) + "</code> "; },
-		wcode: function (m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
+		wcode: function (s,m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
 		
 		underline: function (m, cont) { return " <span meno-underline>" + cont + "</span>" + rest; },
 		
 		link: function (match, txt, mod, url, down, rest) {
-			//console.log(txt, mod, url, down);
 			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + 
 					addInlines() + (down?'download="'+down+'"':"") +">" + 
 					(txt==" "?url:parseLink(txt)) + "</a> "+rest;
@@ -327,19 +358,18 @@ var meno = (function () {
 		
 		wordspace: function(str){return str.replace(/(_)/gm," ");},
 		
-		word: function(tag, m, cont){
-			return Rep.getHTML(tag,Rep.wordspace(cont));
+		word: function(tag, m, s, cont){
+			//console.log(s);
+			var s = s != ":" ? " " : "";
+			return Rep.getHTML(tag,Rep.wordspace(cont),s);
 		},
 		
 		bloc: function(tag, m, cont){
-			return Rep.getHTML(tag,cont);
+			return Rep.getHTML(tag,cont,"");
 		}
 	};
 	
-	attr= {};
-	style= {};
-	attrList= ["class", "name", "title"];
-	styleList= ["cursor", "color", "font", "float", "background"];
+	var attr = {}, style= {}, styleList= ["cursor", "color", "font", "float", "background"];
 
 	addInlines= function(){
 		var t = " ";
@@ -387,6 +417,8 @@ var meno = (function () {
 		var ulist = 0;
 		var listArr = [];
 		var elems = "";
+		attr = {};
+		style = {};
 		for (i in tree) {
 			t = tree[i];
 			if (t.type == "list-item" ) {
@@ -398,7 +430,7 @@ var meno = (function () {
 					}
 					if (t.indent > ulist) {
 						for (var l = 0; l < t.indent - ulist; l++) {
-							elems += getTab(t.indent-1)+"<" + t.list + "l>\n";
+							elems += getTab(t.indent-1)+"<" + t.list + "l " + addInlines() + ">\n";
 							listArr.push(getTab(t.indent-1)+"</" + t.list + "l>\n");
 						}
 					}
@@ -414,32 +446,28 @@ var meno = (function () {
 				ulist = 0;
 			}
 			switch (t.type) {
-			case 'raw':
-				elems += t.value+"\n";
-				break;
 			case 'text':
 				elems += simpleHTML("p",t.value)
 				break;
 			case 'header':
 				elems += simpleHTML("h"+t.priority,t.value)
 				break;
-			case 'sub': case'sup': case 'code': case 'nav': case 'blockquote':
-				elems += simpleHTML(t.type,t.value)
+			case 'bloc':
+				if(t.tag == "comment"){
+					elems += "<!--" + t.value + "-->\n";
+				} else{
+					elems += simpleHTML(t.tag,t.value);
+				}
 				break;
 			case 'marquee':
 				var ptext = parseText(t.value);
 				elems += "<marquee direction='"+t.direction+"'>" + ptext + "</marquee>\n";
 				break;
-			case 'comment':
-				elems += "<!--" + t.value + "-->\n";
-				break;
 			case 'image':
 				elems += "<img " + addInlines() + "alt='" + t.alt + "' src='" + t.url + "' >\n";
 				break;
 			case 'container':
-				elems += "\n<" + t.tag + 
-				(t.classname?" class='"+t.classname+"'":"") +
-				(t.id?" id='"+t.id+"'":"") + " >\n";
+				elems += "\n<" + t.tag + " " + t.inline + " >\n";
 				break;
 			case 'columns':
 				elems += '\n<div meno-col style="'+ 
@@ -465,20 +493,20 @@ var meno = (function () {
 				break;
 			case 'attr':
 				if (t.name == "") {
-					attr = {};
-					style = {};
+					attr = {}; style = {};
 				} else if (styleList.indexOf(t.name) != -1) {
 					style[t.name] = t.value;
-				} else if (attrList.indexOf(t.name) != -1) { 
-					attr[t.name] = t.value; 
+				} else { 
+					attr[t.name] = t.value;
 				}
+				break;
+			case 'raw':
+				elems += t.value+"\n";
 				break;
 			default:
 				elems = elems;
 			}
 		}
-		attr = {};
-		style = {};
 		return elems;
 	};
 
