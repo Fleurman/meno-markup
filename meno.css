@@ -117,7 +117,6 @@
 	content:attr(-tip);
 	font-size:13px;
 	min-width:100px;
-	min-height:100px;
 	background-color: rgba(50,50,50,0.8);
 	color: white;
 	border-bottom:2px solid orange;
