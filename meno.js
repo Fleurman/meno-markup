@@ -22,23 +22,23 @@ var meno = (function () {
 		req.open('GET', file, true);
 		req.send(null);
 	};
-
+	creg = new RegExp("\\s\\/\\/.+$","gm");
 	m.writeTo= function (target, file) {
 		loadFile(function (response) {
-			var raw = response.replace(/\/\/.+$/gm,"\n");
+			var raw = response.replace(creg,"\n");
 			var lines = raw.split(/\r\n|\r|\n/);
 			putIn(target, parse(lines));
 		}, file);
 	};
 
 	m.displayTo= function (target, text) {
-		text = text.replace(/\/\/.+$/gm,"\n");
+		text = text.replace(creg,"\n");
 		var lines = text.split(/\r\n|\r|\n/);
 		putIn(target, parse(lines));
 	};
 
 	m.parsed= function (text) {
-		text = text.replace(/\/\/.+$/gm,"\n");
+		text = text.replace(creg,"\n");
 		var lines = text.split(/\r\n|\r|\n/);
 		return parse(lines);
 	};
