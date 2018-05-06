@@ -8,6 +8,11 @@
 	color:dimgrey;
 	font-family:'consolas';
 }
+.meno samp {
+	background-color:rgb(253,253,253);
+	color:grey;
+	font-variant:petite-caps;
+}
 .meno textarea {
     resize: none;
 }
@@ -115,6 +120,12 @@
 }
 .meno [-tip]::after {
 	content:attr(-tip);
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	opacity: 0;
+	visibility:hidden;
+	transition: opacity 0.3s;
 	font-size:13px;
 	min-width:100px;
 	background-color: rgba(50,50,50,0.8);
@@ -124,12 +135,6 @@
 	border-bottom-left-radius:0;
 	border-top-right-radius:0;
 	padding:3px 8px;
-	position: absolute;
-	bottom: 100%;
-	left: 50%;
-	opacity: 0;
-	visibility:hidden;
-	transition: opacity 0.3s;
 }
 .meno [-tip]:hover::after {opacity:1;visibility:visible;}
 .meno [-tip]:hover {

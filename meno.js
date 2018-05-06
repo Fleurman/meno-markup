@@ -23,18 +23,12 @@ var meno = (function () {
 		req.send(null);
 	};
 	creg = new RegExp("\\s\\/\\/.+$","gm");
-	m.writeTo= function (target, file) {
+	m.loadTo= function (target, file) {
 		loadFile(function (response) {
 			var raw = response.replace(creg,"\n");
 			var lines = raw.split(/\r\n|\r|\n/);
 			putIn(target, parse(lines));
 		}, file);
-	};
-
-	m.displayTo= function (target, text) {
-		text = text.replace(creg,"\n");
-		var lines = text.split(/\r\n|\r|\n/);
-		putIn(target, parse(lines));
 	};
 
 	m.parsed= function (text) {
@@ -148,7 +142,7 @@ var meno = (function () {
 					};
 					if (is(match[1])) {expr.title = match[1];}
 					if (match[2]) { data.isBlock = true; }
-				} else if (match = /^;;;(.*)/.exec(input)) {
+				} else if (match = /^;;;$/.exec(input)) {
 					expr = {
 						type: "raw",
 						value: "",
@@ -198,7 +192,7 @@ var meno = (function () {
 				}
 				if (expr.type != "blank") {
 					if (tree[data.blockid - 1] && expr.type == "text" && tree[data.blockid - 1].type == expr.type) {
-						tree[data.blockid - 1].value += "\200\n" + expr.value;
+						tree[data.blockid - 1].value += " \200\n" + expr.value;
 					} else {
 						tree[data.blockid] = expr;
 						if(data.isBlock==false&&data.isRaw==false)data.blockid++;
@@ -223,7 +217,7 @@ var meno = (function () {
 		[
 			"-_-",	"comment",
 			"<",	"blockquote",
-			";",	"code"
+			";",	"code",
 		];
 	function isBloc(r){
 		var match;
@@ -249,11 +243,7 @@ var meno = (function () {
 	}
 	tToWord = (function(){ 
 		var h = {
-			"-":"br",
-			":":"blank",
-			"<":"blockquote",
-			"-_-":"comment",
-			";":"code"}; 
+			"-":"br", ":":"blank"}; 
 		return function(t){return (h[t]||t);}; 
 	})();
 	
@@ -294,10 +284,7 @@ var meno = (function () {
 		
 		parsed = parsed.replace(/</g,"&lt;");
 		
-		parsed = parsed.replace(Reg.l, Rep.link);
-		
 		parsed = parsed.replace(Reg.b(";;;"), Rep.raw);
-		
 		
 		parsed = parsed.replace(/(?:^| )\[([^\]:]+?):(.+?)\](?: |$|)/gm, Rep.hint);
 		
@@ -305,28 +292,30 @@ var meno = (function () {
 			parsed = doParseInline(parsed,inlineTags[i],inlineTags[i+1]);
 		}
 		
+		parsed = parsed.replace(/(\200)/g, " <br> ");
+		parsed = parsed.replace(Reg.l, Rep.link);
+		
 		parsed = parsed.replace(Reg.w(";"), Rep.wcode);
 		parsed = parsed.replace(Reg.b(";"), Rep.code);
 		
-		parsed = parsed.replace(/(?: |^)\[([^\[]+)\]([^ ]+)(?: |$)/gm, Rep.imageinline);
+		parsed = parsed.replace(Reg.i, Rep.imageinline);
 		
-		
-		parsed = parsed.replace(/(\200)/g, "<br>");
-		parsed = parsed.replace(/-:\s/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+		parsed = parsed.replace(/\s-:\s/g, " &nbsp;&nbsp;&nbsp;&nbsp; ");
 		
 		return unescape(parsed);
 	};
 
 	parseLink= function (raw) {
 		var parsed = raw;
-		parsed = parsed.replace(/(?: |^)\[([^\[]+)\[([^ ]+)(?: |$)/gm, Rep.image);
+		parsed = parsed.replace(Reg.i, Rep.image);
 		return parsed;
 	};
 	
 	Reg = {
 		w: function(tag){return new RegExp("( |^|:)"+tag+"([^ \\n\\\[]+)(?: |$)","gm");},
 		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","gm");},
-		l: (function(){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |\200|$)","gm");})(),
+		l: (function(){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |$|\200)","gm");})(),
+		i: (function(){return new RegExp("(?: |^)\\[([^\\[]+)\\]([^ ]+)(?: |$)","gm");})()
 	};
 
 	Rep = {
@@ -341,10 +330,11 @@ var meno = (function () {
 		code: function (m, cont) { return " <code -inblock >" + escape(cont) + "</code> "; },
 		wcode: function (s,m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
 		
-		link: function (match, txt, mod, url, down, rest) {
+		link: function (match, txt, mod, url, down,rest) {
+			console.log(match," - ",txt," - ",mod," - ",url," - ",down," - ",rest);
 			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + 
 					addInlines() + (down?'download="'+down+'"':"") +">" + 
-					(txt==" "?url:parseLink(txt)) + "</a> "+rest;
+					(txt=="_"?url:parseLink(txt)) + "</a>";
 		},
 		
 		image: function (match, alt, url) { return Rep.getImg(alt,url); },
@@ -515,7 +505,7 @@ var meno = (function () {
 		return inner;
 	};
 
-	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno textarea{resize:none}.meno details{border-bottom:2px dotted #d3d3d3;border-right:2px dotted #d3d3d3}.meno details span{color:grey;font-size:.9em;padding-left:20px;display:block}.meno [-inblock],.meno nav{display:inline-block}.meno h1,h2,h3,h4,h5,h6{margin:4px auto}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote::before{content:open-quote}.meno blockquote::after{content:close-quote}.meno [-list] span{margin-left:15px;font-size:.8em;color:#696969}.meno [-list]{padding:5px;border-left:2px solid #d3d3d3;list-style-position:inside}.meno [-list] [-list]{border:none;padding:2px;margin-left:20px}.meno [-list]>li{font-size:1.2em;font-weight:700}.meno ul[-list]>li{list-style-type:none}.meno ul[-list]>li:before{content:'| '}.meno [-list] [-list]>li{font-size:1.1em;color:#696969}.meno [-list] ul[-list]>li:before{content:': ';color:#000}.meno [-list] [-list] [-list]>li{font-size:1.05em;font-weight:400;color:grey}.meno [-list] [-list] ul[-list]>li:before{content:'· '}.meno [-list] [-list] [-list] [-list]>li{font-size:1em;font-weight:400;color:#000}.meno [-list] [-list] [-list] ul[-list]>li:before{content:'- ';color:#000}.meno [-hr]{height:2px;margin:1em 0}.meno [-col] p{margin-top:0}.meno [-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [-tip]::after{content:attr(-tip);font-size:13px;min-width:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px;position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s}.meno [-tip]:hover::after{opacity:1;visibility:visible}.meno [-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
+	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno samp{background-color:#fdfdfd;color:grey;font-variant:petite-caps}.meno textarea{resize:none}.meno details{border-bottom:2px dotted #d3d3d3;border-right:2px dotted #d3d3d3}.meno details span{color:grey;font-size:.9em;padding-left:20px;display:block}.meno [-inblock],.meno nav{display:inline-block}.meno h1,h2,h3,h4,h5,h6{margin:4px auto}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote::before{content:open-quote}.meno blockquote::after{content:close-quote}.meno [-list] span{margin-left:15px;font-size:.8em;color:#696969}.meno [-list]{padding:5px;border-left:2px solid #d3d3d3;list-style-position:inside}.meno [-list] [-list]{border:none;padding:2px;margin-left:20px}.meno [-list]>li{font-size:1.2em;font-weight:700}.meno ul[-list]>li{list-style-type:none}.meno ul[-list]>li:before{content:'| '}.meno [-list] [-list]>li{font-size:1.1em;color:#696969}.meno [-list] ul[-list]>li:before{content:': ';color:#000}.meno [-list] [-list] [-list]>li{font-size:1.05em;font-weight:400;color:grey}.meno [-list] [-list] ul[-list]>li:before{content:'· '}.meno [-list] [-list] [-list] [-list]>li{font-size:1em;font-weight:400;color:#000}.meno [-list] [-list] [-list] ul[-list]>li:before{content:'- ';color:#000}.meno [-hr]{height:2px;margin:1em 0}.meno [-col] p{margin-top:0}.meno [-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [-tip]::after{content:attr(-tip);position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s;font-size:13px;min-width:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px}.meno [-tip]:hover::after{opacity:1;visibility:visible}.meno [-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
 
 	m.addCSS= function () {
 		var styl = document.createElement("style");
