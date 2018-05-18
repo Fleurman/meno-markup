@@ -13,9 +13,6 @@
 	color:grey;
 	font-variant:petite-caps;
 }
-.meno textarea {
-    resize: none;
-}
 
 .meno details {
 	border-bottom:2px dotted lightgrey;
@@ -28,7 +25,7 @@
 	display:block;
 }
 
-.meno h1,h2,h3,h4,h5,h6 {
+.meno h1,.meno h2,.meno h3,.meno h4,.meno h5,.meno h6 {
 	margin: 4px auto;
 }
 
