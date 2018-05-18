@@ -14,7 +14,7 @@ var meno = (function () {
 			
 		}, "https://raw.githubusercontent.com/Fleurman/meno-markup/master/meno.min.js");
 	};
-	loadFile =  function (callback, file) {
+	function loadFile (callback, file) {
 		var req = new XMLHttpRequest();
 		req.onload = function (event) {
 			callback(this.responseText);
@@ -22,7 +22,7 @@ var meno = (function () {
 		req.open('GET', file, true);
 		req.send(null);
 	};
-	creg = new RegExp("\\s\\/\\/.+$","gm");
+	var creg = new RegExp("\\s\\/\\/.+$","gm");
 	m.loadTo= function (target, file) {
 		loadFile(function (response) {
 			var raw = response.replace(creg,"\n");
@@ -37,11 +37,11 @@ var meno = (function () {
 		return parse(lines);
 	};
 
-	putIn= function (target, inner) {
+	function putIn(target, inner) {
 		target.innerHTML = inner;
 	};
 
-	parseRaw= function (lines) {
+	function parseRaw(lines) {
 		var tree = {};
 		var data = {
 			id: 0,
@@ -204,8 +204,8 @@ var meno = (function () {
 		return tree;
 	};
 	
-	is = function(str){return str.trim().length>1?true:false;}
-	rule = (function(){
+	function is(str){return str.trim().length>1?true:false;}
+	var rule = (function(){
 		var h = {":":"4px dotted lightgrey","]":"1px solid lightgrey"}
 		return function(c){
 			if(h[c])return h[c];
@@ -241,20 +241,20 @@ var meno = (function () {
 		a.push(t);
 		a.push(e);
 	}
-	tToWord = (function(){ 
+	var tToWord = (function(){ 
 		var h = {
 			"-":"br", ":":"blank"}; 
 		return function(t){return (h[t]||t);}; 
 	})();
 	
-	getMIME = (function(){
+	var getMIME = (function(){
 		var h = {"mp3":"mpeg","ogg":"ogg"};
 		return function(m){
 			return "audio/"+h[m];
 		}
 	})();
 
-	doParseInline = function(raw,tag,el){
+	function doParseInline(raw,tag,el){
 		raw = raw.replace(Reg.w(tag), Rep.word.bind(Rep,el));
 		raw = raw.replace(Reg.b(tag), Rep.bloc.bind(Rep,el));
 		return raw;
@@ -279,7 +279,7 @@ var meno = (function () {
 		}
 	}
 
-	parseText= function (parsed) {
+	function parseText(parsed) {
 		
 		
 		parsed = parsed.replace(/</g,"&lt;");
@@ -305,20 +305,20 @@ var meno = (function () {
 		return unescape(parsed);
 	};
 
-	parseLink= function (raw) {
+	function parseLink(raw) {
 		var parsed = raw;
 		parsed = parsed.replace(Reg.i, Rep.image);
 		return parsed;
 	};
 	
-	Reg = {
+	var Reg = {
 		w: function(tag){return new RegExp("( |^|:)"+tag+"([^ \\n\\\[]+)(?: |$)","gm");},
 		b: function(tag){return new RegExp("(?: |^)"+tag+"\\[(.+?)\\](?: |$)","gm");},
 		l: (function(){return new RegExp("(?: |^)>([^><]+?)(&lt;|>)([^ ;]+);?([^ ]*?)( |$|\200)","gm");})(),
 		i: (function(){return new RegExp("(?: |^)\\[([^\\[]+)\\]([^ ]+)(?: |$)","gm");})()
 	};
 
-	Rep = {
+	var Rep = {
 		getHTML: function(tag,cont,s){ return s+"<"+tag+">"+cont+"</"+tag+"> " },
 		
 		getImg: function(alt,url,line){
@@ -359,13 +359,13 @@ var meno = (function () {
 	
 	var attr = {}, style= {}, styleList= ["cursor", "color", "font", "float", "background"];
 
-	addInlines= function(){
+	function addInlines(){
 		var t = " ";
 		t += addAttr();
 		t += addStyle();
 		return t;
 	};
-	addAttr= function () {
+	function addAttr() {
 		var k = Object.keys(attr);
 		if(k.length<1)return "";
 		var t = " ";
@@ -377,7 +377,7 @@ var meno = (function () {
 		}
 		return t;
 	};
-	addStyle= function () {
+	function addStyle() {
 		var k = Object.keys(style);
 		if(k.length<1)return "";
 		var t = ' style="';
@@ -391,15 +391,15 @@ var meno = (function () {
 		return t;
 	};
 	
-	getTab = function(n){ var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t; };
+	function getTab(n){ var t = ""; for(var i = 0;i<n;i++){t+="  ";} return t; };
 	
-	simpleHTML = function(tag,val,noin){ 
+	function simpleHTML(tag,val,noin){ 
 		return "<"+tag+(!noin?addInlines():"")+">"+parseText(val)+"</"+tag+">\n"; 
 	}
 	
-	support = function(pro,val){return '-webkit-'+pro+':'+val+';'+'-moz-'+pro+':'+val+';'+pro+':'+val+';';};
+	function support(pro,val){return '-webkit-'+pro+':'+val+';'+'-moz-'+pro+':'+val+';'+pro+':'+val+';';};
 	
-	produceHTML= function (tree) {
+	function produceHTML(tree) {
 		var i = 0;
 		var t = {};
 		var ulist = 0;
@@ -498,7 +498,7 @@ var meno = (function () {
 		return elems;
 	};
 
-	parse= function(lines) {
+	function parse(lines) {
 		var val;
 		val = parseRaw(lines);
 		var inner = produceHTML(val);
