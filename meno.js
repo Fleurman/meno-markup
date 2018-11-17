@@ -78,13 +78,13 @@ var meno = (function () {
 						value: match[3]
 					};
 					if (match[2]) { data.isBlock = true; }
-				} else if (match = /^-{3,}([^ -]+)?$/.exec(input)) {
+				} else if (match = /^-{3,}([^ ]+)?$/.exec(input)) {
 					expr = {
 						type: "hr"
 					};
 					if(match[1]!=undefined){
 						expr.type = "colorline";
-						expr.value = match[1];
+						expr.value = match[1].split("-");
 					}
 				}
 				else if (match = /^\[(-{2,}|:{2,}|\]{2,})\[/.exec(input)) {
@@ -103,7 +103,6 @@ var meno = (function () {
 						inline: match[2] || ""
 					};
 					data.container.push(match[1]);
-					//console.log("Custom Bloc begins: " + expr.tag + " - " + expr.inline);
 				} 
 				else if (match = /^_([a-zA-Z-]*):(.*)$/.exec(input)) {
 					expr = {
@@ -147,14 +146,14 @@ var meno = (function () {
 						type: "raw",
 						value: "",
 					};
-					//console.log(input + "=> Raw Bloc begins");
 					data.isRaw = true;
 				}
-				else if (match = /^\[([^\[\]]*)\](.+)/g.exec(input)) {
+				else if (match = /^\[([^\[\]]*)\](<(.+)>)?(.+)/g.exec(input)) {
 					expr = {
 						type: "image",
 						alt: match[1],
-						url: match[2]
+						size: match[3] ? match[3].split(" "):false,
+						url: match[4]
 					};
 				}
 				else if (match = /^(-+|\]+|\^+) (.+)/.exec(input)) {
@@ -331,7 +330,6 @@ var meno = (function () {
 		wcode: function (s,m, cont) { return Rep.code(m, Rep.wordspace(cont)); },
 		
 		link: function (match, txt, mod, url, down,rest) {
-			console.log(match," - ",txt," - ",mod," - ",url," - ",down," - ",rest);
 			return " <a href='" + url + "' target='"+(mod==">"?"_blank":"_self")+"' " + 
 					addInlines() + (down?'download="'+down+'"':"") +">" + 
 					(txt=="_"?url:parseLink(txt)) + "</a>";
@@ -347,7 +345,6 @@ var meno = (function () {
 		wordspace: function(str){return str.replace(/(_)/gm," ");},
 		
 		word: function(tag, m, s, cont){
-			//console.log(s);
 			var s = s != ":" ? " " : "";
 			return Rep.getHTML(tag,Rep.wordspace(cont),s);
 		},
@@ -423,7 +420,6 @@ var meno = (function () {
 						}
 					}
 				elems += getTab(t.indent)+"<li>" + parseText(t.value) + "</li>\n";
-				//console.log(ulist, t.indent, t.list);
 				ulist = t.indent;
 				}else
 					elems += getTab(t.indent)+"\t<span>"+parseText(t.value) + "</span><br>\n";
@@ -452,7 +448,11 @@ var meno = (function () {
 				elems += "<marquee direction='"+t.direction+"'>" + ptext + "</marquee>\n";
 				break;
 			case 'image':
-				elems += "<img " + addInlines() + "alt='" + t.alt + "' src='" + t.url + "' >\n";
+				elems += "<img " + addInlines() 
+				+ "alt='" + t.alt 
+				+ "' src='" + t.url + "'"
+				+ (t.size?"width='"+t.size[0]+"'"+(t.size[1]?"height='"+t.size[1]+"'":""):"")
+				+ ">\n";
 				break;
 			case 'container':
 				elems += "\n<" + t.tag + " " + t.inline + " >\n";
@@ -469,8 +469,12 @@ var meno = (function () {
 				elems += "<"+t.type+(t.type=="hr"?addInlines():"")+">\n";
 				break;
 			case 'colorline':
-				elems += "\n<div -hr " +
-				"style='background-color:" + t.value + "'></div>\n";
+				elems += "\n<div -hr "
+					+ "style='background"
+					+ (t.value.length == 1 ?
+						"-color:" + t.value[0] :
+						"-image:linear-gradient(90deg,"+t.value.join(",")+")")
+					+ "'></div>\n";
 				break;
 			case 'audio':
 				elems += '\n<audio'+addInlines()+'controls type="'+ t.mime + '" src="' + t.src + '"></audio>\n';
@@ -505,7 +509,7 @@ var meno = (function () {
 		return inner;
 	};
 
-	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno samp{background-color:#fdfdfd;color:grey;font-variant:petite-caps}.meno details{border-bottom:2px dotted #d3d3d3;border-right:2px dotted #d3d3d3}.meno details span{color:grey;font-size:.9em;padding-left:20px;display:block}.meno [-inblock],.meno nav{display:inline-block}.meno h1,.meno h2,.meno h3,.meno h4,.meno h5,.meno h6{margin:4px auto}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote::before{content:open-quote}.meno blockquote::after{content:close-quote}.meno [-list] span{margin-left:15px;font-size:.8em;color:#696969}.meno [-list]{padding:5px;border-left:2px solid #d3d3d3;list-style-position:inside}.meno [-list] [-list]{border:none;padding:2px;margin-left:20px}.meno [-list]>li{font-size:1.2em;font-weight:700}.meno ul[-list]>li{list-style-type:none}.meno ul[-list]>li:before{content:'| '}.meno [-list] [-list]>li{font-size:1.1em;color:#696969}.meno [-list] ul[-list]>li:before{content:': ';color:#000}.meno [-list] [-list] [-list]>li{font-size:1.05em;font-weight:400;color:grey}.meno [-list] [-list] ul[-list]>li:before{content:'· '}.meno [-list] [-list] [-list] [-list]>li{font-size:1em;font-weight:400;color:#000}.meno [-list] [-list] [-list] ul[-list]>li:before{content:'- ';color:#000}.meno [-hr]{height:2px;margin:1em 0}.meno [-col] p{margin-top:0}.meno [-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [-tip]::after{content:attr(-tip);position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s;font-size:13px;min-width:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px}.meno [-tip]:hover::after{opacity:1;visibility:visible}.meno [-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}",
+	m.css= ".meno{font-family:Calibri}.meno code{display:block;background-color:#f5f5f5;color:#696969;font-family:consolas}.meno samp{background-color:#fdfdfd;color:grey;font-variant:petite-caps}.meno details{border-bottom:2px dotted #d3d3d3;border-right:2px dotted #d3d3d3}.meno details span{color:grey;font-size:.9em;padding-left:20px;display:block}.meno [-inblock],.meno nav{display:inline-block}.meno h1,.meno h2,.meno h3,.meno h4,.meno h5,.meno h6{margin:4px auto}.meno a{color:#87ceeb;text-decoration:none;border-bottom:1px solid #d3d3d3}.meno nav{margin:5px;padding:0 5px;border-right:2px solid #d3d3d3;border-left:2px solid #d3d3d3;background-color:#fafafa}.meno nav a{border:none}.meno blockquote{font-style:italic;margin-left:1em}.meno blockquote::before{content:open-quote}.meno blockquote::after{content:close-quote}.meno [-list] span{margin-left:15px;font-size:.8em;color:#696969}.meno [-list]{padding:5px;border-left:2px solid #d3d3d3;list-style-position:inside}.meno [-list] [-list]{border:none;padding:2px;margin-left:20px}.meno [-list]>li{font-size:1.2em;font-weight:700}.meno ul[-list]>li{list-style-type:none}.meno ul[-list]>li:before{content:'| '}.meno [-list] [-list]>li{font-size:1.1em;color:#696969}.meno [-list] ul[-list]>li:before{content:': ';color:#000}.meno [-list] [-list] [-list]>li{font-size:1.05em;font-weight:400;color:grey}.meno [-list] [-list] ul[-list]>li:before{content:'· '}.meno [-list] [-list] [-list] [-list]>li{font-size:1em;font-weight:400;color:#000}.meno [-list] [-list] [-list] ul[-list]>li:before{content:'- ';color:#000}.meno [-hr]{height:2px;margin:1em 0;overflow:hidden}.meno [-col] p{margin-top:0}.meno [-tip]{position:relative;display:inline;border-bottom:1px dotted pink}.meno [-tip]::after{content:attr(-tip);position:absolute;bottom:100%;left:50%;opacity:0;visibility:hidden;transition:opacity .3s;font-size:13px;min-width:100px;background-color:rgba(50,50,50,.8);color:#fff;border-bottom:2px solid orange;border-radius:10px 0;padding:3px 8px}.meno [-tip]:hover::after{opacity:1;visibility:visible}.meno [-tip]:hover{border:1px solid orange;margin:-1px;background-color:rgba(250,250,100,.1);cursor:help}.meno ::selection{background-color:orange;color:#fff}";
 
 	m.addCSS= function () {
 		var styl = document.createElement("style");
